@@ -507,7 +507,7 @@ sub getpage {
             my $last = $1;
             $re =~ s/\(.\)/$last/;
             $re = qr/$re/i;
-            pop @data, $/ while $data[-1]{name} =~ $re;
+            pop @data while $data[-1]{name} =~ $re;
             $string =~ s/\*/$last*/;
         }
 
