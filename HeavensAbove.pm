@@ -473,15 +473,17 @@ answers (stops at the 200 firsts for the moment).
 
 Better network errors handling.
 
-Find an appropriate interface with Léon, and adhere to it.
+Find an appropriate interface with Leon, and adhere to it.
 
 =head1 BUGS
 
-Probably.
+WWW::Gazetteer::HeavensAbove does not work correctly yes with the US,
+since the database returns State and County. I suppose this is the only
+country that behaves this way, due to the way the database was created.
 
-Bugs in the database are not from heavens-above.com. They "put
-together and enhanced" data from the following two sources: US
-Geological Survey (http://geonames.usgs.gov/index.html) for the
+Bugs in the database are not from heavens-above.com, since they
+"put together and enhanced" data from the following two sources:
+US Geological Survey (http://geonames.usgs.gov/index.html) for the
 USA and dependencies, and The National Imaging and Mapping Agency
 (http://www.nima.mil/gns/html/index.html) for all other countries.
 
@@ -491,7 +493,7 @@ See also: http://www.heavens-above.com/ShowFAQ.asp?FAQID=100
 
 Philippe "BooK" Bruhat E<lt>book@cpan.orgE<gt>.
 
-This module was a script, before I found out about Léon Brocard's
+This module was a script, before I found out about Leon Brocard's
 WWW::Gazetteer module. Thanks! And, erm, bits of the documentation were
 stolen from WWW::Gazetteer.
 
