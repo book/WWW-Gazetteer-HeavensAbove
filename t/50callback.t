@@ -1,18 +1,16 @@
 use strict;
-use Test::More skip_all => "callbacks don't work yet";
-#use Test::More tests => 3;
+use Test::More tests => 3;
 use WWW::Gazetteer::HeavensAbove;
 
 my $g = WWW::Gazetteer::HeavensAbove->new;
 
 my @cities;
+my @towns;
 my $callback = sub {
     for(@_) {
         $_->{latitude} += 1;
-        push @cities, $_;
+        push @towns, $_;
     }
-    use Data::Dumper;
-    print Dumper \@cities;
 };
 
 # move both Paris!
@@ -40,4 +38,4 @@ my @tests = (
     }
 );
 
-is_deeply( $cities[$_], $tests[$_], $tests[$_]{name} ) for 0 .. 1;
+is_deeply( $towns[$_], $tests[$_], $tests[$_]{name} ) for 0 .. 1;
