@@ -584,7 +584,7 @@ sub getpage {
         $root->delete;
     }
 
-     print STDERR "$string -> "; # DEBUG
+    # print STDERR "$string -> "; # DEBUG
     # more than 200 answers: compute better hints for next query
     if ( $count == -1 ) {
 
@@ -640,7 +640,7 @@ sub getpage {
 
         # more difficult cases with several jokers are ignored
     }
-     print STDERR scalar(@data), $/; #DEBUG
+    # print STDERR scalar(@data), $/; #DEBUG
     return ( $string, @data );
 }
 
