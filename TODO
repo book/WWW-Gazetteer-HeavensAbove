@@ -1,6 +1,9 @@
 TODO
 
  - support single ?
+   => a-z ...
  - support * and ?
  - support several *
+   => find the one that yields the longest strings
+   s/\*/(.*)/g => compute a list of captures, find the average length of each
 

@@ -7,7 +7,7 @@ use HTML::TreeBuilder;
 use Carp qw( croak );
 
 use vars qw( $VERSION );
-$VERSION = 0.04;
+$VERSION = 0.05;
 
 # web site data
 my $base = 'http://www.heavens-above.com/';
@@ -605,7 +605,7 @@ This module was a script, before I found out about Leon Brocard's
 WWW::Gazetteer module. Thanks! And, erm, bits of the documentation were
 stolen from WWW::Gazetteer.
 
-Thanks to Alain Zalmanski (from http://www.fatrazie.com/) for asking
+Thanks to Alain Zalmanski (of http://www.fatrazie.com/ fame) for asking
 me for all that geographical data in the first place.
 
 =head1 SEE ALSO
