@@ -1,6 +1,9 @@
 Revision history for Perl extension WWW::Gazetteer::Heavens
 
-0.06  
+0.07  Tue Oct 22 00:30:40 CEST 2002
+        - interface change to conform to WWW::Gazetteer's city, country order
+
+0.06  Tue Oct 19 11:40:43 CEST 2002
         - the query '*' now works correctly
         - some countries do not have a 'region' field at all
         - elevation is simple number, in meters ('508 m' => 508)
