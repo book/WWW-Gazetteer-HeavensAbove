@@ -222,6 +222,7 @@ my %iso = (
 =begin codes
 
 # Heavens-above places without ISO 3166 code
+# You can use those with query()
 %ha = (
         'JE' => 'JERSEY',
         'SR' => 'SERBIA',
@@ -466,12 +467,28 @@ sub getpage {
 
 =back
 
+=head2 Callbacks
+
+The fetch() and query() methods both accept a optionnal coderef as
+their third argument. This method is used as a callback each time a
+batch of cities is returned by a web query to heavens-above.com.
+
+This method is called in void context, and is passed a list of
+hashrefs (the cities fetched by the last query).
+
+An example callback is (from F<eg/city.pl>):
+
+ # print a tab separated list of cities
+ my $cb = sub {
+     local $, = "\t";
+     local $\ = $/;
+     print @$_{qw(name alias region latitude longitude elevation)} for @_;
+ };
+
 =head1 TODO
 
 Allow the script to run correctly when a query returns more than 200
 answers (stops at the 200 firsts for the moment).
-
-Better network errors handling.
 
 Find an appropriate interface with Leon, and adhere to it.
 
@@ -506,7 +523,7 @@ me for all that geographical data in the first place.
 lightning talks at YAPC::Europe 2002 (Munich). Slides will be online
 someday.
 
-WWW::Gazetteer, the original, by Léon Brocard.
+WWW::Gazetteer, the original, by Leon Brocard.
 
 The use Perl discussion that had me write this module from the original
 script: http://use.perl.org/~acme/journal/8079
