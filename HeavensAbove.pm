@@ -403,6 +403,25 @@ returns a lot of cities, you can pass a callback routine to fetch().
 This routine receives the list of city structures as @_. If a callback
 method is given to fetch(), fetch() will return an empty list.
 
+Here's an excerpt from heavens-above.com documentation: 
+
+=over 4
+
+You can use "wildcard" characters to match several towns if you're not
+sure of the exact name. These characters are '*' which means "match
+any sequence of characters", and '?' which means "match any single
+character". The search is not case-sensitive.
+
+Diacritic characters, such as ü and Ä can either be entered directly
+from the keyboard (assuming you have the appropriate keyboard), or
+simply enter the letter without diacritic (e.g. you can enter 'a' for
+'ä', 'à', 'á', 'â', 'ã' and 'å'). If you need a special character which
+is not on your keyboard, and is not a diacritic (e.g. the german 'ß',
+and scandinavian 'æ'), simply enter a "?" instead, and all characers
+will be matched.
+
+=back
+
 Note: heavens-above.com doesn't use ISO 3166 codes, but its own
 country codes. If you want to use those directly, please see the query()
 method. (And read the source for the full list of HA codes.)
@@ -534,6 +553,11 @@ The fetch() and query() methods both accept a optionnal coderef as
 their third argument. This method is used as a callback each time a
 batch of cities is returned by a web query to heavens-above.com.
 
+This can be very useful if a query with a joker returns more than
+200 answers.  WWW::Gazetteer::HeavensAbove breaks it into new requests
+that return a smaller number of answers. The callback is called with
+the results of the subquery after each web request.
+
 This method is called in void context, and is passed a list of
 hashrefs (the cities fetched by the last query).
 
@@ -551,8 +575,8 @@ can (and will most probably) be called with an empty @_.
 
 =head1 TODO
 
-Allow the script to run correctly when a query returns more than 200
-answers (stops at the 200 firsts for the moment).
+Handle the case where a query with more than one joker (*?) returns
+more than 200 answers. For now, it stops at 200.
 
 Find an appropriate interface with Leon, and adhere to it.
 
@@ -561,7 +585,7 @@ Find an appropriate interface with Leon, and adhere to it.
 Network errors croak. This can be a problem when making big queries
 (that return more than 200 answers) which results are passed to a
 callback, because part of the data has been already processed by
-the callback when the script dies. An even if you can catch the exception,
+the callback when the script dies. And even if you can catch the exception,
 you cannot easily guess where to start again. Maybe a retry parameter
 could help a little.
 
