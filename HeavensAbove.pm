@@ -322,18 +322,35 @@ matching cities.
 A city tructure looks like this:
 
  $lesparis = {
-     'latitude'   => '45.633',
-     'regionname' => 'Region',
-     'region'     => 'Rhône-Alpes',
-     'alias'      => 'Les Paris',
-     'elevation'  => '508 m',
-     'longitude'  => '5.733',
-     'name'       => 'Paris',
+     latitude   => '45.633',
+     regionname => 'Region',
+     region     => 'Rhône-Alpes',
+     alias      => 'Les Paris',
+     elevation  => '508 m',
+     longitude  => '5.733',
+     name       => 'Paris',
  };
  
 Note: the 'regioname' attribute is the local name of a region (this can
 change from country to country).
 
+Due to the way heavens-above.com's database was created, cities from the
+U.S.A. are handled as a special case. The C<region> field is the state,
+and a special field named C<county> holds the county name.
+
+An example of an American city:
+
+ $newyork = {
+     latitude   => '39.685',
+     regionname => 'State',
+     region     => 'Missouri',
+     county     => 'Caldwell',    # this is only for US cities
+     alias      => '',
+     elevation  => '244 m',
+     longitude  => '-93.927',
+     name       => 'New York'
+ };
+ 
 =head2 Methods
 
 =over 4
@@ -391,10 +408,7 @@ sub query {
     my ( $self, $code, $query, $callback ) = @_;
     $code = uc $code;
 
-    my $url = $base
-      . "selecttown.asp?CountryID=$code&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET";
-
-    #. "selecttown.asp?CountryID=$id&loc=Unspecified";
+    my $url = $base . "selecttown.asp?CountryID=$code&loc=Unspecified";
     my $res = $self->{ua}->request( HTTP::Request->new( GET => $url ) );
     croak $res->status_line if not $res->is_success;
 
@@ -403,6 +417,7 @@ sub query {
     my $string = $query;
     my @data;
     do {
+
         # $string now holds the next request (if necessary)
         my ( $string, @list ) = $self->getpage( $form, $string );
 
@@ -416,10 +431,10 @@ sub query {
 
 # this is a private method
 sub getpage {
-    my ($self, $form, $string) = @_;
+    my ( $self, $form, $string ) = @_;
 
     # fill the form and click submit
-    $form->find_input('Search')->value( $string );
+    $form->find_input('Search')->value($string);
     my $res = $self->{ua}->request( $form->click );
     croak $res->status_line if not $res->is_success;
 
@@ -441,20 +456,24 @@ sub getpage {
 
     # handle the region name
     my $regionname = shift @rows;
-    $regionname = ($regionname->content_list)[1]->as_trimmed_text;
+    my $county;
+    $county     = ( $regionname->content_list )[2]->as_trimmed_text eq "County";
+    $regionname = ( $regionname->content_list )[1]->as_trimmed_text;
 
-    # fetch the data for each line
+    # fetch and process the data for each line
     my @data;
     for (@rows) {
         my $town = { regionname => $regionname, alias => '' };
-        @$town{qw( name region latitude longitude elevation )} =
-          ( map { $_->as_trimmed_text } $_->content_list );
+        @$town{qw( name region county latitude longitude elevation )} =
+          ( map { $_->as_trimmed_text } $_->content_list )[ 0, 1, -5 .. -2 ];
+        delete $town->{county} if not $county;    # county is only for US
         $town->{alias} = $1 if $town->{name} =~ s/\(alias for (.*?)\)//;
-            push @data, $town;
+        push @data, $town;
     }
     $root->delete;
 
-    if( $count == -1 ) {
+    if ( $count == -1 ) {
+
         # TODO
         # find the first ones and store them
         # and modify $string
