@@ -232,7 +232,7 @@ my %iso = (
         'WE' => 'WEST BANK',
       );
 
-# ISO 3166 codes not used yet
+# ISO 3166 codes not used yet or countries not in HA
 %iso = (
          'IO' => 'BRITISH INDIAN OCEAN TERRITORY',
          'BV' => 'BOUVET ISLAND',
@@ -317,6 +317,10 @@ WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
      'Bacton', 'GB',
      sub { print $_->{name}, ", ", $_->{elevation}, $/ for @_ }
  );
+
+ # find() returns an arrayref in scalar context
+ $cities = $atlas->find( 'Paris', 'FR' );
+ print $cities->[1]{name};
 
  # the heavens-above.com site supports complicated queries
  my @az = $atlas->find( 'a*z', 'FR' );
@@ -504,7 +508,7 @@ sub query {
 
     } while ( length($query) < length($string) );
 
-    return @data;
+    return wantarray ? @data : \@data;
 }
 
 # this is a private method
@@ -589,7 +593,9 @@ sub getpage {
         if ( $string =~ y/*// == 1 ) {
             $string =~ s/z\*/*/i;
             $string =~ s/([a-y])\*/chr(1+ord$1).'*'/ie;
-            $string =~ s/[-'" (,]\*/a*/; # quick and dirty for now
+
+            # quick and dirty for now
+            $string =~ s/[-'" (,]\*/a*/;
         }
 
         # more difficult cases with several jokers are ignored
