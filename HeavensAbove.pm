@@ -328,7 +328,7 @@ method. (And read the source for the full list of HA codes.)
 =cut
 
 sub fetch {
-    my ( $self, $iso ) = ( shift, shift );
+    my ( $self, $iso ) = ( shift, uc shift );
     croak "No HA code for $iso ISO code" if !exists $iso{$iso};
     return $self->query( $iso{$iso}, @_ );
 }
@@ -343,6 +343,7 @@ country code, instead of the ISO 3166 code.
 
 sub query {
     my ( $self, $code, $query, $callback ) = @_;
+    $code = uc $code;
 
     my $url = $base
       . "selecttown.asp?CountryID=$code&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET";
@@ -355,74 +356,76 @@ sub query {
     my $form = HTML::Form->parse( $rep->content, $base );
 
     my $string = $query;
-    my $regionname;
     my @data;
     do {
+        # $string now holds the next request (if necessary)
+        my ( $string, @list ) = $self->getpage( $form, $string );
 
-        # fill the form and click submit
-        $form->find_input('Search')->value("$string*");
-        my $res = $self->{ua}->request( $form->click );
+        # process the block of data
+        defined $callback ? &$callback(@list) : push @data, @list;
 
-        # TODO Error checking - $res
+    } while ( length($query) < length($string) );
 
-        my $content = $res->content;
-        $content =~ s/&nbsp;/ /g;                              # cleanup
-        $content =~ /(\d+) towns were found by the search./;
-        my $count = $1;
-        $count = -1 if index( $content, 'cut-off after 200 towns' ) != -1;
-
-        # parse the data
-        my $root = HTML::TreeBuilder->new_from_content($content);
-        my @rows =
-          ( $root->look_down( _tag => 'table' ) )[2]->look_down( _tag => 'tr' );
-
-        # handle the region name
-        if( not defined $regionname ) {
-            $regionname = shift @rows;
-            $regionname = ($regionname->content_list)[2]->as_trimmed_text;
-        }
-	else { shift @rows }
-
-        # fetch the data for each line
-        for (@rows) {
-            my $town = { regionname => $regionname };
-            @$town{qw( name alias region latitude longitude elevation )} =
-              ( map { $_->as_trimmed_text } $_->content_list );
-            $town->{alias} = $1 if $town->{name} =~ s/\(alias for (.*?)\)//;
-            push @data, $town;
-        }
-        $root->delete;
-
-        if( $count == -1 ) {
-            # find the first ones
-            # store the hints
-	    # and modify $string
-            # eventually call the callback
-            if( defined $callback ) {
-                &$callback( @data );
-                @data = ();
-            }
-        }
-	else {
-	    # compute next 
-	}
-
-    } while ( $query ne $string );
-
-    # country => France
-    # name => Paris
-    # region => Rhône Alpes
-    # alias => Les Paris
-    # regionname => Region
-    # latitude => 45.633
-    # longitude => 5.733 
-    # elevation => 508 m 
     return @data;
+}
+
+sub getpage {
+    my ($self, $form, $string) = @_;
+
+    # fill the form and click submit
+    $form->find_input('Search')->value( $string );
+    my $res = $self->{ua}->request( $form->click );
+
+    # TODO Error checking - $res
+
+    my $content = $res->content;
+    $content =~ s/&nbsp;/ /g;                              # cleanup
+    $content =~ /(\d+) towns were found by the search./;
+    my $count = $1;
+    $count = -1 if index( $content, 'cut-off after 200 towns' ) != -1;
+
+    # parse the data
+    my $root = HTML::TreeBuilder->new_from_content($content);
+    my @rows =
+      ( $root->look_down( _tag => 'table' ) )[2]->look_down( _tag => 'tr' );
+
+    # handle the region name
+    my $regionname = shift @rows;
+    $regionname = ($regionname->content_list)[1]->as_trimmed_text;
+
+    # fetch the data for each line
+    my @data;
+    for (@rows) {
+        my $town = { regionname => $regionname, alias => '' };
+        @$town{qw( name region latitude longitude elevation )} =
+          ( map { $_->as_trimmed_text } $_->content_list );
+        $town->{alias} = $1 if $town->{name} =~ s/\(alias for (.*?)\)//;
+            push @data, $town;
+        # example data
+        # country => France
+        # name => Paris
+        # region => Rhône Alpes
+        # alias => Les Paris
+        # regionname => Region
+        # latitude => 45.633
+        # longitude => 5.733 
+        # elevation => 508 m 
+    }
+    $root->delete;
+
+    if( $count == -1 ) {
+        # find the first ones and store them
+        # and modify $string
+    }
+    return ( $string, @data );
 }
 
 =back
 
 =head1 TODO
+
+Allow the script to run correctly when a query returns more than 200
+answers.
 
 Find an appropriate interface with Léon, and follow it.
 
@@ -432,6 +435,11 @@ Philippe "BooK" Bruhat E<lt>book@cpan.orgE<gt>.
 
 This module was a script, before I found out about Léon Brocard's
 WWW::Gazetteer module. Thanks!
+
+=head1 COPYRIGHT
+
+This module is free software; you can redistribute it or modify it under
+the same terms as Perl itself.
 
 =cut
 
