@@ -362,7 +362,10 @@ sub query {
         my ( $string, @list ) = $self->getpage( $form, $string );
 
         # process the block of data
-        defined $callback ? &$callback(@list) : push @data, @list;
+        if ( defined $callback ) {
+            $callback->(@list);
+        }
+        else { push @data, @list; }
 
     } while ( length($query) < length($string) );
 
@@ -427,6 +430,8 @@ sub getpage {
 Allow the script to run correctly when a query returns more than 200
 answers.
 
+Error handling.
+
 Find an appropriate interface with Léon, and follow it.
 
 =head1 AUTHOR
@@ -435,6 +440,17 @@ Philippe "BooK" Bruhat E<lt>book@cpan.orgE<gt>.
 
 This module was a script, before I found out about Léon Brocard's
 WWW::Gazetteer module. Thanks!
+
+=head1 SEE ALSO
+
+"How I captured thousands of Afghan cities in a few hours", one of my
+lightning talks at YAPC::Europe 2002 (Munich). Slides will be online
+someday.
+
+WWW::Gazetteer, the original, by Léon Brocard.
+
+The use Perl discussion that had me write this module from the original
+script: http://use.perl.org/~acme/journal/8079
 
 =head1 COPYRIGHT
 

@@ -2,3 +2,8 @@ WWW::Gazetteer::HeavensAbove
 ----------------------------
 
 This is yet another Gazetteer module.
+
+This module allows to request information about cities
+in one of the 207 countries supported by http://www.heavens-above.com/,
+in a very simple manner.
+
