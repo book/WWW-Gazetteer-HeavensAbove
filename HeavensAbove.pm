@@ -289,12 +289,54 @@ WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
 
  my $atlas = WWW::Gazetteer::HeavensAbove->new;
 
- my $nice = $atlas->fetch( FR => 'Nice' );
- print join ", ", $nice->{qw( name longitude latitude elevation )};
+ # simple query using ISO 3166 codes
+ my @towns = $atlas->fetch( GB => 'Bacton' );
+ print $_->{name}, ", ", $_->{elevation}, $/ for @towns;
+
+ # simple query using heavens-above.com codes
+ my @towns = $atlas->query( UK => 'Bacton' );
+ print $_->{name}, ", ", $_->{elevation}, $/ for @towns;
+
+ # big queries can use a callback (and return nothing)
+ $atlas->fetch(
+     GB => 'Bacton',
+     sub { print $_->{name}, ", ", $_->{elevation}, $/ for @_ }
+ );
+
+ # the heavens-above.com site supports complicated queries
+ my @az = $atlas->fetch( FR => 'a*z' );
 
 =head1 DESCRIPTION
 
+A gazetteer is a geographical dictionary (as at the back of an atlas).
+The WWW::Gazetteer::HeavensAbove module uses the information at
+http://www.heavens-above.com/countries.asp to return geographical location
+(longitude, latitude, elevation) for towns and cities in countries in the
+world.
+
+Once a WWW::Gazetteer::HeavensAbove objects is created, use the fetch()
+method to return lists of hashrefs holding all the information for the
+matching cities.
+
+A city tructure looks like this:
+
+ $lesparis = {
+     'latitude'   => '45.633',
+     'regionname' => 'Region',
+     'region'     => 'Rhône-Alpes',
+     'alias'      => 'Les Paris',
+     'elevation'  => '508 m',
+     'longitude'  => '5.733',
+     'name'       => 'Paris',
+ };
+ 
+=head2 Methods
+
 =over 4
+
+=item new()
+
+Return a new WWW::Gazetteer::UserAgent, ready to fetch() cities for you.
 
 =cut
 
@@ -369,6 +411,7 @@ sub query {
     return @data;
 }
 
+# this is a private method
 sub getpage {
     my ($self, $form, $string) = @_;
 
@@ -406,19 +449,11 @@ sub getpage {
           ( map { $_->as_trimmed_text } $_->content_list );
         $town->{alias} = $1 if $town->{name} =~ s/\(alias for (.*?)\)//;
             push @data, $town;
-        # example data
-        # country => France
-        # name => Paris
-        # region => Rhône Alpes
-        # alias => Les Paris
-        # regionname => Region
-        # latitude => 45.633
-        # longitude => 5.733 
-        # elevation => 508 m 
     }
     $root->delete;
 
     if( $count == -1 ) {
+        # TODO
         # find the first ones and store them
         # and modify $string
     }
@@ -430,18 +465,34 @@ sub getpage {
 =head1 TODO
 
 Allow the script to run correctly when a query returns more than 200
-answers.
+answers (stops at the 200 firsts for the moment).
 
-Error handling.
+Better network errors handling.
 
-Find an appropriate interface with Léon, and follow it.
+Find an appropriate interface with Léon, and adhere to it.
+
+=head1 BUGS
+
+Probably.
+
+Bugs in the database are not from heavens-above.com. They "put
+together and enhanced" data from the following two sources: US
+Geological Survey (http://geonames.usgs.gov/index.html) for the
+USA and dependencies, and The National Imaging and Mapping Agency
+(http://www.nima.mil/gns/html/index.html) for all other countries.
+
+See also: http://www.heavens-above.com/ShowFAQ.asp?FAQID=100
 
 =head1 AUTHOR
 
 Philippe "BooK" Bruhat E<lt>book@cpan.orgE<gt>.
 
 This module was a script, before I found out about Léon Brocard's
-WWW::Gazetteer module. Thanks!
+WWW::Gazetteer module. Thanks! And, erm, bits of the documentation were
+stolen from WWW::Gazetteer.
+
+Thanks to Alain Zalmanski (from http://www.fatrazie.com/) for asking
+me for all that geographical data in the first place.
 
 =head1 SEE ALSO
 
