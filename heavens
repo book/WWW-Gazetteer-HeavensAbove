@@ -64,6 +64,7 @@ sub get_country {
     my $url = $base
       . "selecttown.asp?CountryID=$id&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET";
     my $rep = $ua->request( HTTP::Request->new( GET => $url ) );
+
     my $form = HTML::Form->parse( $rep->content, $base );
     my $count;
     my %next = ( ' ', ( ',', qw/ - ' " /, 'a' .. 'y' ) x 2, 'z' );
@@ -95,9 +96,17 @@ sub get_page {
     my ( $form, $id, $name, $title ) = @_;
 
     # fetch data
-    debug( 2, "$id - $name*" );
     $form->find_input('Search')->value("$name*");
-    my $content = $ua->request( $form->click )->content;
+    my $res;
+    my $wait = 0;
+    do {
+        sleep $wait * 10;
+        debug( 2, "$id - $name*" . ( $wait ? " - retry $wait" : "" ) );
+        $res = $ua->request( $form->click );
+        $wait++;
+    } until $res->is_success;
+
+    my $content = $res->content;
     $content =~ s/&nbsp;/ /g;                              # cleanup
     $content =~ /(\d+) towns were found by the search./;
     my $count = $1;
@@ -151,7 +160,7 @@ heaven [-hvn] [-d <n>] [-s <name>] [CODE [...] ]
    -L       List the available countries (by code)
    -s       Start all searches with <name>
    -t       Add a timestamp to debug messages
-   -v       Be verbose
+   -v       Be verbose (add the title line)
 EOU
     exit shift;
 }
