@@ -394,11 +394,10 @@ sub query {
       . "selecttown.asp?CountryID=$code&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET";
 
     #. "selecttown.asp?CountryID=$id&loc=Unspecified";
-    my $rep = $self->{ua}->request( HTTP::Request->new( GET => $url ) );
+    my $res = $self->{ua}->request( HTTP::Request->new( GET => $url ) );
+    croak $res->status_line if not $res->is_success;
 
-    # TODO error checking
-
-    my $form = HTML::Form->parse( $rep->content, $base );
+    my $form = HTML::Form->parse( $res->content, $base );
 
     my $string = $query;
     my @data;
@@ -421,8 +420,7 @@ sub getpage {
     # fill the form and click submit
     $form->find_input('Search')->value( $string );
     my $res = $self->{ua}->request( $form->click );
-
-    # TODO Error checking - $res
+    croak $res->status_line if not $res->is_success;
 
     my $content = $res->content;
     if ( index( $content, "ADODB.Field" ) != -1 ) {
@@ -459,6 +457,9 @@ sub getpage {
         # TODO
         # find the first ones and store them
         # and modify $string
+        # 1) easy: "str" and "str*"
+        # 2) not difficult: "st*r" (one star)
+        # 3) difficult: several jokers
     }
     return ( $string, @data );
 }
