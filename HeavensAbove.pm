@@ -512,7 +512,7 @@ sub query {
     do {
 
         # $string now holds the next request (if necessary)
-        ( $string, my @list ) = $self->getpage( $form, $string, $iso );
+        ( $string, my @list ) = $self->_getpage( $form, $string, $iso );
 
         # process the block of data
         defined $callback ? $callback->(@list) : push @data, @list;
@@ -523,7 +523,7 @@ sub query {
 }
 
 # this is a private method
-sub getpage {
+sub _getpage {
     my ( $self, $form, $string, $iso ) = @_;
 
     # fill the form and click submit
