@@ -7,7 +7,7 @@ use HTML::TreeBuilder;
 use Carp qw( croak );
 
 use vars qw( $VERSION );
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 # web site data
 my $base = 'http://www.heavens-above.com/';
@@ -583,14 +583,22 @@ sub getpage {
         # simplest case (scary, heh?)
         if ( $string =~ y/*// == 1 ) {
             my $re = '^' . quotemeta($string) . '$';
+            $re =~ s/\?/./g;
             $re =~ s/([aceidnouy])/$isolatin{lc $1}/ig;
             $re =~ s/\\\*/(.).*/;    # HA's * are greedy, I think
             $data[-1]{name} =~ /$re/i;
             my $last = $string eq '*' ? substr( $data[-1]{name}, 0, 1 ) : $1;
-            $re =~ s/\(\.\)/quotemeta($last)/e;
-            $re = qr/$re/i;
-            pop @data while @data && $data[-1]{name} =~ $re;
-            $string =~ s/\*/$last*/;
+            if ($last) {
+                $re =~ s/\(\.\)/quotemeta($last)/e;
+                $re = qr/$re/i;
+                pop @data while @data && $data[-1]{name} =~ $re;
+                $string =~ s/\*/$last*/;
+            }
+            else {
+                # there are more than 200 Buenavista, MX
+                # and this is an ugly, ugly hack
+                $string =~ s/\*/?*/;
+            }
         }
 
         # more difficult cases with several jokers are ignored
@@ -599,7 +607,7 @@ sub getpage {
 
         # simplest case
         if ( $string =~ y/*// == 1 ) {
-            $string =~ s/z\*/*/i;
+            $string =~ s/[z?]\*/*/i;    # ugly hack, continued
             $string =~ s/([a-y])\*/chr(1+ord$1).'*'/ie;
 
             # quick and dirty for now
