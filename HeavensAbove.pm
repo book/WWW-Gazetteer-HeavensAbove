@@ -597,6 +597,8 @@ sub getpage {
             else {
                 # there are more than 200 Buenavista, MX
                 # and this is an ugly, ugly hack
+                warn "200 identical cities match '$string', "
+                  . "only 200 returned\n";
                 $string =~ s/\*/?*/;
             }
         }
