@@ -7,7 +7,7 @@ use HTML::TreeBuilder;
 use Carp qw( croak );
 
 use vars qw( $VERSION );
-$VERSION = 0.05;
+$VERSION = 0.06;
 
 # web site data
 my $base = 'http://www.heavens-above.com/';
@@ -349,7 +349,7 @@ A city tructure looks like this:
      regionname => 'Region',
      region     => 'Rhône-Alpes',
      alias      => 'Les Paris',
-     elevation  => '508 m',
+     elevation  => '508',            # meters
      longitude  => '5.733',
      name       => 'Paris',
  };
@@ -369,7 +369,7 @@ Here is an example of an American city:
      region     => 'Missouri',
      county     => 'Caldwell',    # this is only for US cities
      alias      => '',
-     elevation  => '244 m',
+     elevation  => '244',
      longitude  => '-93.927',
      name       => 'New York'
  };
@@ -527,6 +527,7 @@ sub getpage {
           ( map { $_->as_trimmed_text } $_->content_list )[ 0, 1, -5 .. -2 ];
         delete $town->{county} if not $county;    # county is only for US
         $town->{alias} = $1 if $town->{name} =~ s/\(alias for (.*?)\)//;
+        $town->{elevation} =~ s/ m$//;
         push @data, $town;
     }
 
