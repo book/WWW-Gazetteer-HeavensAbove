@@ -7,7 +7,7 @@ use HTML::TreeBuilder;
 use Carp qw( croak );
 
 use vars qw( $VERSION );
-$VERSION = 0.06;
+$VERSION = 0.07;
 
 # web site data
 my $base = 'http://www.heavens-above.com/';
@@ -305,25 +305,25 @@ WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
  my $atlas = WWW::Gazetteer::HeavensAbove->new;
 
  # simple query using ISO 3166 codes
- my @towns = $atlas->fetch( GB => 'Bacton' );
+ my @towns = $atlas->fetch( 'Bacton', 'GB' );
  print $_->{name}, ", ", $_->{elevation}, $/ for @towns;
 
  # simple query using heavens-above.com codes
- my @towns = $atlas->query( UK => 'Bacton' );
+ my @towns = $atlas->query( 'Bacton', 'UK' );
  print $_->{name}, ", ", $_->{elevation}, $/ for @towns;
 
  # big queries can use a callback (and return nothing)
  $atlas->fetch(
-     GB => 'Bacton',
+     'Bacton', 'GB',
      sub { print $_->{name}, ", ", $_->{elevation}, $/ for @_ }
  );
 
  # the heavens-above.com site supports complicated queries
- my @az = $atlas->fetch( FR => 'a*z' );
+ my @az = $atlas->fetch( 'a*z', 'FR' );
 
  # and you can naturally use callbacks for those!
  my ($c, n);
- $atlas->fetch( US => 'N*', sub { $c++; $n += @_ }  );
+ $atlas->fetch( 'N*', 'US', sub { $c++; $n += @_ }  );
  print "$c web requests for fetching $n cities";
 
  # or use your own UserAgent
@@ -404,7 +404,7 @@ sub new {
     bless { ua => $ua, retry => 5, @_ }, $class;
 }
 
-=item fetch( $code, $city [, $callback ] )
+=item fetch( $city, $code [, $callback ] )
 
 Return a list of cities matching $city, within the country with ISO 3166
 code $code (not all codes are supported by heavens-above.com).
@@ -445,12 +445,12 @@ method. (And read the source for the full list of HA codes.)
 =cut
 
 sub fetch {
-    my ( $self, $iso ) = ( shift, uc shift );
+    my ( $self, $query, $iso ) = ( shift, shift, uc shift );
     croak "No HA code for $iso ISO code" if !exists $iso{$iso};
-    return $self->query( $iso{$iso}, @_ );
+    return $self->query( $query, $iso{$iso}, @_ );
 }
 
-=item query( $code, $searchstring [, $callback ] );
+=item query( $searchstring, $code [, $callback ] );
 
 This method is the actual method called by fetch().
 
@@ -460,7 +460,7 @@ country code, instead of the ISO 3166 code.
 =cut
 
 sub query {
-    my ( $self, $code, $query, $callback ) = @_;
+    my ( $self, $query, $code, $callback ) = @_;
     $code = uc $code;
 
     my $url = $base . "selecttown.asp?CountryID=$code&loc=Unspecified";
@@ -473,11 +473,9 @@ sub query {
     my @data;
     do {
 
-        #print STDERR $string, ' ';
         # $string now holds the next request (if necessary)
         ( $string, my @list ) = $self->getpage( $form, $string );
 
-        #print STDERR scalar @list, $/;
         # process the block of data
         defined $callback ? $callback->(@list) : push @data, @list;
 
