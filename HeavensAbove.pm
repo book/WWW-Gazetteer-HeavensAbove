@@ -382,6 +382,11 @@ sub getpage {
     # TODO Error checking - $res
 
     my $content = $res->content;
+    if ( index( $content, "ADODB.Field" ) != -1 ) {
+        $res->request->content =~ /CountryID=(..)/;
+        croak "No HA code $1";
+    }
+
     $content =~ s/&nbsp;/ /g;                              # cleanup
     $content =~ /(\d+) towns were found by the search./;
     my $count = $1;
