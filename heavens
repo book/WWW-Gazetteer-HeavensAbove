@@ -1,0 +1,229 @@
+#!/usr/bin/perl -w
+$|++;
+use strict;
+use LWP::UserAgent;
+use HTML::Form;
+use HTML::TreeBuilder;
+use Getopt::Std;
+use vars qw( %CONF );
+
+my $ua   = LWP::UserAgent->new();
+my $base = 'http://www.heavens-above.com/';
+my %countries;
+my %cities;
+my ( $req, $res );
+
+# list from $base . 'countries.asp'
+$_ = join '', <DATA>;
+close DATA;
+s/&nbsp;/ /g;
+$countries{$2} = [ $2, $3 ]
+  while
+m!<a HREF="(selecttown\.asp\?CountryID=(..)&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET)">(.*?)</a>!ig;
+
+#
+# switch processing
+#
+getopts( 'lLd:vhs:t', \%CONF ) or usage(1);
+
+usage(0) if $CONF{h};
+
+if ( $CONF{l} && $CONF{L} ) {
+    print STDERR "-l and -L are mutually exclusive!\n";
+    usage(1);
+}
+
+if ( $CONF{l} || $CONF{L} ) {
+
+    # select sort key
+    my $key = $CONF{l} || 0;
+    print map { ( $_->[$key], "\t", $_->[ !$key ], "\n" ) }
+      sort { $a->[$key] cmp $b->[$key] } values %countries;
+
+    exit 0;
+}
+
+if ( $CONF{s} && $CONF{s} !~ /^[-, '"a-z]+$/ ) {
+    print STDERR "Invalid start name <$CONF{s}>!\n";
+    usage(1);
+}
+
+$CONF{t} &&= time;
+
+for my $id (@ARGV) {
+    print STDERR "$id - unknown country, skipping\n" and next
+      if !exists $countries{$id};
+    get_country($id);
+}
+
+#
+# fetch a whole country
+#
+sub get_country {
+    my $id  = shift;
+    my $url = $base
+      . "selecttown.asp?CountryID=$id&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET";
+    my $rep = $ua->request( HTTP::Request->new( GET => $url ) );
+    my $form = HTML::Form->parse( $rep->content, $base );
+    my $count;
+    my %next = ( ' ', ( ',', qw/ - ' " /, 'a' .. 'y' ) x 2, 'z' );
+    my $name  = $CONF{s} || 'a';
+    my $title = $CONF{v} || 0;
+    debug( 1, "$id - starting extraction" );
+
+    # the tree algorithm
+    while ($name) {
+        my ( $res, $nonalpha ) = get_page( $form, $id, $name, $title );
+        if ( $res == -1 ) {
+
+            # possible non-alpha chars are ' ', '-', "'", '"', ','
+            $name .= $nonalpha ? ' ' : 'a';
+            next;
+        }
+        $title = 0;
+        $name =~ s/z+$//;
+        $name .= $next{ chop $name } if $name;
+        $count += $res;
+    }
+    debug( 1, "$id - extracted $count cities" );
+}
+
+#
+# get a single page
+#
+sub get_page {
+    my ( $form, $id, $name, $title ) = @_;
+
+    # fetch data
+    debug( 2, "$id - $name*" );
+    $form->find_input('Search')->value("$name*");
+    my $content = $ua->request( $form->click )->content;
+    $content =~ s/&nbsp;/ /g;                              # cleanup
+    $content =~ /(\d+) towns were found by the search./;
+    my $count = $1;
+    $count = -1 if index( $content, 'cut-off after 200 towns' ) != -1;
+
+    # parse the data
+    my $root = HTML::TreeBuilder->new_from_content($content);
+    my @rows =
+      ( $root->look_down( _tag => 'table' ) )[2]->look_down( _tag => 'tr' );
+    my @data;
+    shift @rows unless $title;
+    for (@rows) {
+        my $town = [ $countries{$id}[1], "", "" ];
+        @$town[ 1, 3 .. 6 ] = ( map { $_->as_trimmed_text } $_->content_list );
+        $town->[2] = $1 if $town->[1] =~ s/\(alias for (.*?)\)//;
+        push @data, $town;
+    }
+    $root->delete;
+
+    # print the towns
+    my $nonalpha = 0;
+    {
+        local $, = "\t";
+        local $\ = "\n";
+        if ($title) {    # correct title
+            $data[0]->[0] = "Country" if $title;
+            $data[0]->[2] = "Alias"   if $title;
+        }
+        for (@data) {
+            $nonalpha++ if $_->[1] =~ /^$name[-,'" ]/i;
+            print @$_ if $count > 0;
+        }
+    }
+    debug( 3, sprintf "$id - $name* => %3d found, %3d non-alpha next", $count,
+        $nonalpha );
+    return ( $count, $nonalpha );
+}
+
+sub debug {
+    printf STDERR "%09d ", time - $CONF{t} if $CONF{t};
+    print STDERR shift, "\n" if $CONF{d} >= shift;
+}
+
+# the usage page
+sub usage {
+    print STDERR << 'EOU';
+heaven [-hvn] [-d <n>] [-s <name>] [CODE [...] ]
+   -h       Display this help screen
+   -d <n>   Enable debug level <n>
+   -l       List the available countries (by name)
+   -L       List the available countries (by code)
+   -s       Start all searches with <name>
+   -t       Add a timestamp to debug messages
+   -v       Be verbose
+EOU
+    exit shift;
+}
+
+# the main page
+__DATA__
+<HTML>
+<HEAD>
+<TITLE>Select Country</TITLE>
+<LINK REL=STYLESHEET TYPE="text/css" HREF="css/ha.css">
+</HEAD>
+<body>
+
+<TABLE BORDER=0 CELLSPACING=1>
+<TR><TD ALIGN=left COLSPAN=1 VALIGN=center>
+<TABLE WIDTH=112><TR><TD>
+
+<A HREF="main.asp?lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">
+
+<IMG SRC="images/ha.gif" ALT="Return to main menu page" ALIGN=left BORDER=0 WIDTH=112 HEIGHT=60>
+</A>
+</TD></TR></TABLE>
+</TD><TD>
+
+<A target=_top HREF="http://www.burstnet.com/ads/ad6935a-map.cgi/61854"><IMG SRC="http://www.burstnet.com/cgi-bin/ads/ad6935a.cgi/61854" border=0 width=468 height=60 ALT="Advertisement"></A>
+
+</TD></TR><TR>
+<TD ALIGN=left COLSPAN=2 CLASS=pagehead>
+<HR>
+Select Country
+</TD>
+</TR><TR>
+<TD COLSPAN=2 CLASS="normal">
+
+<P>
+<TABLE WIDTH=600>
+<TR><TD>
+Our location database includes most towns and villages in the entire world 
+(over 2 million places!).
+Please select your country from the list, then click the button to go on to the next
+page where you can select your town. 
+<P>
+To quickly get to your country, just click on the first letter in this navigation bar.
+</TD></TR></TABLE>
+<P>
+|&nbsp;<A HREF="#A">A</A>&nbsp;|&nbsp;<A HREF="#B">B</A>&nbsp;|&nbsp;<A HREF="#C">C</A>&nbsp;|&nbsp;<A HREF="#D">D</A>&nbsp;|&nbsp;<A HREF="#E">E</A>&nbsp;|&nbsp;<A HREF="#F">F</A>&nbsp;|&nbsp;<A HREF="#G">G</A>&nbsp;|&nbsp;<A HREF="#H">H</A>&nbsp;|&nbsp;<A HREF="#I">I</A>&nbsp;|&nbsp;<A HREF="#J">J</A>&nbsp;|&nbsp;<A HREF="#K">K</A>&nbsp;|&nbsp;<A HREF="#L">L</A>&nbsp;|&nbsp;<A HREF="#M">M</A>&nbsp;|&nbsp;<A HREF="#N">N</A>&nbsp;|&nbsp;<A HREF="#O">O</A>&nbsp;|&nbsp;<A HREF="#P">P</A>&nbsp;|&nbsp;<A HREF="#Q">Q</A>&nbsp;|&nbsp;<A HREF="#R">R</A>&nbsp;|&nbsp;<A HREF="#S">S</A>&nbsp;|&nbsp;<A HREF="#T">T</A>&nbsp;|&nbsp;<A HREF="#U">U</A>&nbsp;|&nbsp;<A HREF="#V">V</A>&nbsp;|&nbsp;<A HREF="#W">W</A>&nbsp;|&nbsp;X&nbsp;|&nbsp;<A HREF="#Y">Y</A>&nbsp;|&nbsp;<A HREF="#Z">Z</A>&nbsp;
+|<P>
+<TABLE WIDTH=640>
+<TR><TD>
+<A NAME="A"><B>A</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=AF&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Afghanistan</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AL&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Albania</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Algeria</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AX&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">American&nbsp;Samoa</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AN&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Andorra</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Angola</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AV&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Anguilla</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AT&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Antarctica</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AC&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Antigua&nbsp;and&nbsp;Barbuda</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Argentina</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AM&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Armenia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Aruba</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AS&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Australia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Austria</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AJ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Azerbaijan</A> |<P><A NAME="B"><B>B</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=BF&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Bahamas,&nbsp;The</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Bahrain</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Bangladesh</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BB&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Barbados</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Belarus</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BE&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Belgium</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BH&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Belize</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BN&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Benin</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BD&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Bermuda</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BT&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Bhutan</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BL&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Bolivia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BK&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Bosnia&nbsp;and&nbsp;Herzegovina</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BC&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Botswana</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Brazil</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BX&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Brunei</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Bulgaria</A> |&nbsp;<A HREF="selecttown.asp?CountryID=UV&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Burkina&nbsp;Faso</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BM&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Burma&nbsp;(Myanmar)</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BY&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Burundi</A> |<P><A NAME="C"><B>C</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=CB&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Cambodia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CM&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Cameroon</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Canada</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CV&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Cape&nbsp;Verde</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CJ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Cayman&nbsp;Islands</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CT&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Central&nbsp;African&nbsp;Republic</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CD&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Chad</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CI&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Chile</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CH&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">China</A> |&nbsp;<A HREF="selecttown.asp?CountryID=KT&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Christmas&nbsp;Island</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CK&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Cocos&nbsp;(Keeling)&nbsp;Islands</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Colombia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Congo,&nbsp;Democratic&nbsp;Republic&nbsp;of&nbsp;the</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CF&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Congo.&nbsp;Republic&nbsp;of&nbsp;the</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CW&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Cook&nbsp;Islands</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CS&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Costa&nbsp;Rica</A> |&nbsp;<A HREF="selecttown.asp?CountryID=IV&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Cote&nbsp;d'Ivoire</A> |&nbsp;<A HREF="selecttown.asp?CountryID=HR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Croatia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Cuba</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CY&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Cyprus</A> |&nbsp;<A HREF="selecttown.asp?CountryID=EZ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Czech&nbsp;Republic</A> |<P><A NAME="D"><B>D</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=DA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Denmark</A> |&nbsp;<A HREF="selecttown.asp?CountryID=DJ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Djibouti</A> |&nbsp;<A HREF="selecttown.asp?CountryID=DO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Dominica</A> |&nbsp;<A HREF="selecttown.asp?CountryID=DR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Dominican&nbsp;Republic</A> |<P><A NAME="E"><B>E</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=EC&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Ecuador</A> |&nbsp;<A HREF="selecttown.asp?CountryID=EG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Egypt</A> |&nbsp;<A HREF="selecttown.asp?CountryID=ES&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">El&nbsp;Salvador</A> |&nbsp;<A HREF="selecttown.asp?CountryID=EK&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Equatorial&nbsp;Guinea</A> |&nbsp;<A HREF="selecttown.asp?CountryID=ER&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Eritrea</A> |&nbsp;<A HREF="selecttown.asp?CountryID=EN&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Estonia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=ET&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Ethiopia</A> |<P><A NAME="F"><B>F</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=FO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Faroe&nbsp;Islands</A> |&nbsp;<A HREF="selecttown.asp?CountryID=FJ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Fiji</A> |&nbsp;<A HREF="selecttown.asp?CountryID=FI&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Finland</A> |&nbsp;<A HREF="selecttown.asp?CountryID=FR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">France</A> |&nbsp;<A HREF="selecttown.asp?CountryID=FG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">French&nbsp;Guiana</A> |&nbsp;<A HREF="selecttown.asp?CountryID=FP&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">French&nbsp;Polynesia</A> |<P><A NAME="G"><B>G</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=GB&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Gabon</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Gambia,&nbsp;The</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GZ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Gaza&nbsp;Strip</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Georgia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GM&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Germany</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GH&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Ghana</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GI&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Gibraltar</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Greece</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GJ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Grenada</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Guam</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GT&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Guatemala</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GK&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Guernsey</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GV&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Guinea</A> |&nbsp;<A HREF="selecttown.asp?CountryID=GY&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Guyana</A> |<P><A NAME="H"><B>H</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=HA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Haiti</A> |&nbsp;<A HREF="selecttown.asp?CountryID=HO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Honduras</A> |&nbsp;<A HREF="selecttown.asp?CountryID=HK&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Hong&nbsp;Kong</A> |&nbsp;<A HREF="selecttown.asp?CountryID=HU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Hungary</A> |<P><A NAME="I"><B>I</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=IC&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Iceland</A> |&nbsp;<A HREF="selecttown.asp?CountryID=IN&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">India</A> |&nbsp;<A HREF="selecttown.asp?CountryID=ID&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Indonesia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=IR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Iran</A> |&nbsp;<A HREF="selecttown.asp?CountryID=IZ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Iraq</A> |&nbsp;<A HREF="selecttown.asp?CountryID=EI&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Ireland</A> |&nbsp;<A HREF="selecttown.asp?CountryID=IS&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Israel</A> |&nbsp;<A HREF="selecttown.asp?CountryID=IT&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Italy</A> |<P><A NAME="J"><B>J</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=JM&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Jamaica</A> |&nbsp;<A HREF="selecttown.asp?CountryID=JA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Japan</A> |&nbsp;<A HREF="selecttown.asp?CountryID=JE&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Jersey</A> |&nbsp;<A HREF="selecttown.asp?CountryID=JO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Jordan</A> |<P><A NAME="K"><B>K</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=KZ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Kazakhstan</A> |&nbsp;<A HREF="selecttown.asp?CountryID=KE&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Kenya</A> |&nbsp;<A HREF="selecttown.asp?CountryID=KR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Kiribati</A> |&nbsp;<A HREF="selecttown.asp?CountryID=KU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Kuwait</A> |&nbsp;<A HREF="selecttown.asp?CountryID=KG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Kyrgyzstan</A> |<P><A NAME="L"><B>L</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=LA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Laos</A> |&nbsp;<A HREF="selecttown.asp?CountryID=LG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Latvia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=LE&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Lebanon</A> |&nbsp;<A HREF="selecttown.asp?CountryID=LT&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Lesotho</A> |&nbsp;<A HREF="selecttown.asp?CountryID=LI&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Liberia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=LY&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Libya</A> |&nbsp;<A HREF="selecttown.asp?CountryID=LS&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Liechtenstein</A> |&nbsp;<A HREF="selecttown.asp?CountryID=LH&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Lithuania</A> |&nbsp;<A HREF="selecttown.asp?CountryID=LU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Luxembourg</A> |<P><A NAME="M"><B>M</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=MK&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Macedonia,&nbsp;the&nbsp;former&nbsp;Yugoslav&nbsp;Republic&nbsp;of</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Madagascar</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MI&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Malawi</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MY&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Malaysia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MV&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Maldives</A> |&nbsp;<A HREF="selecttown.asp?CountryID=ML&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Mali</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MT&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Malta</A> |&nbsp;<A HREF="selecttown.asp?CountryID=RM&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Marshall&nbsp;Islands</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Mauritania</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MP&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Mauritius</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MX&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Mexico</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MD&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Moldova</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MN&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Monaco</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Mongolia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MW&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Montenegro</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Morocco</A> |&nbsp;<A HREF="selecttown.asp?CountryID=MZ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Mozambique</A> |<P><A NAME="N"><B>N</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=WA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Namibia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NP&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Nepal</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NT&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Netherland&nbsp;Antilles</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NL&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Netherlands</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NZ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">New&nbsp;Zealand</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Nicaragua</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Niger</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NI&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Nigeria</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NF&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Norfolk&nbsp;Island</A> |&nbsp;<A HREF="selecttown.asp?CountryID=KN&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">North&nbsp;Korea</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Norway</A> |<P><A NAME="O"><B>O</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=MU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Oman</A> |<P><A NAME="P"><B>P</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=PK&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Pakistan</A> |&nbsp;<A HREF="selecttown.asp?CountryID=PM&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Panama</A> |&nbsp;<A HREF="selecttown.asp?CountryID=PP&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Papua&nbsp;New&nbsp;Guinea</A> |&nbsp;<A HREF="selecttown.asp?CountryID=PA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Paraguay</A> |&nbsp;<A HREF="selecttown.asp?CountryID=PE&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Peru</A> |&nbsp;<A HREF="selecttown.asp?CountryID=RP&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Philippines</A> |&nbsp;<A HREF="selecttown.asp?CountryID=PL&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Poland</A> |&nbsp;<A HREF="selecttown.asp?CountryID=PO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Portugal</A> |&nbsp;<A HREF="selecttown.asp?CountryID=PR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Puerto&nbsp;Rico</A> |<P><A NAME="Q"><B>Q</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=QA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Qatar</A> |<P><A NAME="R"><B>R</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=RO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Romania</A> |&nbsp;<A HREF="selecttown.asp?CountryID=RS&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Russia</A> |<P><A NAME="S"><B>S</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=SH&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Saint&nbsp;Helena</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SC&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Saint&nbsp;Kitts&nbsp;and&nbsp;Nevis</A> |&nbsp;<A HREF="selecttown.asp?CountryID=ST&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Saint&nbsp;Lucia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=VC&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Saint&nbsp;Vincent&nbsp;and&nbsp;the&nbsp;Grenadines</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Saudi&nbsp;Arabia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Senegal</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SR&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Serbia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SL&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Sierra&nbsp;Leone</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SN&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Singapore</A> |&nbsp;<A HREF="selecttown.asp?CountryID=LO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Slovakia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SI&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Slovenia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=BP&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Solomon&nbsp;Islands</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Somalia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SF&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">South&nbsp;Africa</A> |&nbsp;<A HREF="selecttown.asp?CountryID=KS&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">South&nbsp;Korea</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SP&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Spain</A> |&nbsp;<A HREF="selecttown.asp?CountryID=CE&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Sri&nbsp;Lanka</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Sudan</A> |&nbsp;<A HREF="selecttown.asp?CountryID=NS&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Suriname</A> |&nbsp;<A HREF="selecttown.asp?CountryID=WZ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Swaziland</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SW&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Sweden</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SZ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Switzerland</A> |&nbsp;<A HREF="selecttown.asp?CountryID=SY&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Syria</A> |<P><A NAME="T"><B>T</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=TW&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Taiwan</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TI&lat=0&lng=0&alt=Please see file perltidy.ERR!
+0&loc=Unspecified&TZ=CET">Tajikistan</A> |&nbsp;<A HREF="selecttown.asp?CounPlease see file perltidy.ERR!
+tryID=TZ&lat=0Please see file perltidy.ERR!
+&lng=0&alt=0&loc=Unspecified&TZ=CET">Tanzania</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TH&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Thailand</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TO&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Togo</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TN&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Tonga</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TD&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Trinidad&nbsp;and&nbsp;Tobago</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TS&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Tunisia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TU&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Turkey</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TX&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Turkmenistan</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TK&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Turks&nbsp;and&nbsp;Caicos&nbsp;Islands</A> |&nbsp;<A HREF="selecttown.asp?CountryID=TV&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Tuvalu</A> |<P><A NAME="U"><B>U</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=UG&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Uganda</A> |&nbsp;<A HREF="selecttown.asp?CountryID=UP&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Ukraine</A> |&nbsp;<A HREF="selecttown.asp?CountryID=AE&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">United&nbsp;Arab&nbsp;Emirates</A> |&nbsp;<A HREF="selecttown.asp?CountryID=UK&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">United&nbsp;Kingdom</A> |&nbsp;<A HREF="selecttown.asp?CountryID=US&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">United&nbsp;States&nbsp;of&nbsp;America</A> |&nbsp;<A HREF="selecttown.asp?CountryID=UY&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Uruguay</A> |&nbsp;<A HREF="selecttown.asp?CountryID=UZ&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Uzbekistan</A> |<P><A NAME="V"><B>V</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=NH&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Vanuatu</A> |&nbsp;<A HREF="selecttown.asp?CountryID=VE&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Venezuela</A> |&nbsp;<A HREF="selecttown.asp?CountryID=VM&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Vietnam</A> |<P><A NAME="W"><B>W</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=WF&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Wallis&nbsp;and&nbsp;Futuna</A> |&nbsp;<A HREF="selecttown.asp?CountryID=WE&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">West&nbsp;Bank</A> |<P><A NAME="Y"><B>Y</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=YM&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Yemen</A> |<P><A NAME="Z"><B>Z</B></A><BR>|&nbsp;<A HREF="selecttown.asp?CountryID=ZA&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Zambia</A> |&nbsp;<A HREF="selecttown.asp?CountryID=ZI&lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">Zimbabwe</A> |<P>
+</TD></TR></TABLE>
+The data in this database was put together (and enhanced by us)<BR>
+from the following two sources;
+<P>
+<A HREF="http://mapping.usgs.gov/www/gnis">US Geological Survey</A> for the USA (and dependencies)<BR>
+<A HREF="http://www.nima.mil/gns/html/index.html">The National Imaging and Mapping Agency</A> for all other countries<P>
+<HR>
+<TABLE BORDER=0><TR><TD CLASS="address">
+Developed and maintained by
+<A HREF="mailto:Chris.Peat@heavens-above.com">Chris Peat</A>, Heavens-Above GmbH<BR>
+<B>Please</B> read the updated 
+
+<A HREF="faq.asp?lat=0&lng=0&alt=0&loc=Unspecified&TZ=CET">
+
+FAQ</A> before sending e-mail.
+</TD><TD WIDTH=30>
+</TD><TD>
+<A HREF="http://www.gsoc.dlr.de"><IMG SRC="images/dlrhost.gif" ALT="GSOC Home Page" ALIGN=left BORDER=0></A>
+</TD></TR></TABLE>
+</TD></TR></TABLE>
+</BODY>
+</HTML>
