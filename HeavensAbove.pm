@@ -654,6 +654,13 @@ more than 200 answers. For now, it stops at 200.
 
 =head1 BUGS
 
+There is at least one query that cannot be fulfilled: there are more
+than 200 cities named Buenavista in Mexico. The web site limitation
+of 200 cities per query prevents us to get the other Benavistas in
+Mexico. WWW::Gazetteer::HeavensAbove version 0.11 includes a workaround
+to continues with the global query, and fetch only the first 200
+Buenavistas. (This will work with other similarly broken answers.)
+
 Network errors croak after the maximum retry count has been reached. This
 can be a problem when making big queries (that return more than 200
 answers) which results are passed to a callback, because part of the data
