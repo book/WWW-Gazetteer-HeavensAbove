@@ -610,6 +610,9 @@ sub getpage {
         # simplest case
         if ( $string =~ y/*// == 1 ) {
             $string =~ s/[z?]\*/*/i;    # ugly hack, continued
+            $string =~
+              tr{ÀÁÂÃÄÅàáâãäåÇçÈÉÊËèéêëÌÍÎÏìíîïĞğÑñÒÓÔÕÖØòóôõöøÙÚÛÜùúûüİıÿ}
+                {aaaaaaaaaaaacceeeeeeeeiiiiiiiiddnnoooooooooooouuuuuuuuyyy};
             $string =~ s/([a-y])\*/chr(1+ord$1).'*'/ie;
 
             # quick and dirty for now
