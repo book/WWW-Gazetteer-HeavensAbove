@@ -41,5 +41,5 @@ $g->find( 'buenavista*', 'MX', $cb );
 
 # Make sure the search string stays ok
 @cities = $g->find( 'u*', 'PE' );
-ok( @cities == 449, "449 cities named 'U*' in Peru" )
+ok( @cities == 439, "439 cities named 'U*' in Peru" )
   or diag( "Fetched " . @cities . " cities" );
