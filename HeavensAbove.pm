@@ -278,6 +278,20 @@ my %iso = (
 
 =end codes
 
+=cut
+
+my %isolatin = (
+    a => '[AaÀÁÂÃÄÅàáâãäå]',
+    c => '[CcÇç]',
+    e => '[EeÈÉÊËèéêë]',
+    i => '[IiÌÍÎÏìíîï]',
+    d => '[DdÐð]',
+    n => '[NnÑñ]',
+    o => '[OoÒÓÔÕÖØòóôõöø]',
+    u => '[UuÙÚÛÜùúûü]',
+    y => '[YyÝýÿ]',
+);
+
 =pod
 
 =head1 NAME
@@ -306,6 +320,11 @@ WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
 
  # the heavens-above.com site supports complicated queries
  my @az = $atlas->fetch( FR => 'a*z' );
+
+ # and you can naturally use callbacks for those!
+ my ($c, n);
+ $atlas->fetch( US => 'N*', sub { $c++; $n += @_ }  );
+ print "$c web requests for fetching $n cities";
 
 =head1 DESCRIPTION
 
@@ -420,7 +439,7 @@ sub query {
     do {
 
         # $string now holds the next request (if necessary)
-        my ( $string, @list ) = $self->getpage( $form, $string );
+        ( $string, my @list ) = $self->getpage( $form, $string );
 
         # process the block of data
         defined $callback ? $callback->(@list) : push @data, @list;
@@ -471,16 +490,38 @@ sub getpage {
         $town->{alias} = $1 if $town->{name} =~ s/\(alias for (.*?)\)//;
         push @data, $town;
     }
+
+    # clear off the tree
+    @rows = ();
     $root->delete;
 
+    # more than 200 answers: compute better hints for next query
     if ( $count == -1 ) {
 
-        # TODO
-        # find the first ones and store them
-        # and modify $string
-        # 1) easy: "str" and "str*"
-        # 2) not difficult: "st*r" (one star)
-        # 3) difficult: several jokers
+        # simplest case
+        if ( $string =~ y/*// == 1 ) {
+            my $re = "^$string\$";
+            $re =~ s/([aceidnouy])/$isolatin{lc $1}/ig;
+            $re =~ s/\*/(.).*/;    # HA's * are greedy, I think
+            $data[-1]{name} =~ /$re/i;
+            my $last = $1;
+            $re =~ s/\(.\)/$last/;
+            $re = qr/$re/i;
+            pop @data, $/ while $data[-1]{name} =~ $re;
+            $string =~ s/\*/$last*/;
+        }
+
+        # more difficult cases with several jokers are ignored
+    }
+    else {
+
+        # simplest case
+        if ( $string =~ y/*// == 1 ) {
+            $string =~ s/z\*/*/i;
+            $string =~ s/([a-y])\*/chr(1+ord$1).'*'/ie;
+        }
+
+        # more difficult cases with several jokers are ignored
     }
     return ( $string, @data );
 }
@@ -504,6 +545,9 @@ An example callback is (from F<eg/city.pl>):
      local $\ = $/;
      print @$_{qw(name alias region latitude longitude elevation)} for @_;
  };
+
+Please note that, due to the nature of the queries, your callback
+can (and will most probably) be called with an empty @_.
 
 =head1 TODO
 
