@@ -597,7 +597,7 @@ sub getpage {
             my $last = $string eq '*' ? substr( $data[-1]{name}, 0, 1 ) : $1;
             if ($last) {
                 _isolatin($last);
-                $re =~ s/\(\.\)/$last/e;
+                $re =~ s/\(\.\)/$isolatin{lc $last}/;
                 $re = qr/$re/i;
                 pop @data while @data && $data[-1]{name} =~ $re;
                 $string =~ s/\*/$last*/;
