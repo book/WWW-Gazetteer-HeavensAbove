@@ -362,10 +362,7 @@ sub query {
         my ( $string, @list ) = $self->getpage( $form, $string );
 
         # process the block of data
-        if ( defined $callback ) {
-            $callback->(@list);
-        }
-        else { push @data, @list; }
+        defined $callback ? $callback->(@list) : push @data, @list;
 
     } while ( length($query) < length($string) );
 
