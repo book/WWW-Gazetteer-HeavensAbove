@@ -1,5 +1,5 @@
 use strict;
-use Test::More tests => 10;
+use Test::More tests => 11;
 use WWW::Gazetteer::HeavensAbove;
 
 my $g = WWW::Gazetteer::HeavensAbove->new;
@@ -80,3 +80,8 @@ is_deeply(
     },
     "French Polynesia has no region"
 );
+
+# query returns an arrayref in scalar context
+my $cities = $g->query( 'Paris', 'FR' );
+ok( $cities->[1]{longitude} == 2.333, "query() in scalar context" );
+

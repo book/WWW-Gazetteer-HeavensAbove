@@ -1,5 +1,5 @@
 use strict;
-use Test::More tests => 8;
+use Test::More tests => 9;
 use WWW::Gazetteer::HeavensAbove;
 
 my $g = WWW::Gazetteer::HeavensAbove->new;
@@ -79,3 +79,6 @@ is_deeply(
     'New York, Missouri'
 );
 
+# find returns an arrayref in scalar context
+my $cities = $g->find( 'Paris', 'FR' );
+ok( $cities->[1]{longitude} == 2.333, "find() in scalar context" );
