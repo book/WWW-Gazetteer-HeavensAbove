@@ -4,6 +4,7 @@ WriteMakefile(
     VERSION_FROM => 'HeavensAbove.pm',
     PREREQ_PM    => {
         'HTML::TreeBuilder' => 3,
+        'HTML::Form'        => 0,
         'LWP::UserAgent'    => 2,
         'Test::More'        => 0,
     },
