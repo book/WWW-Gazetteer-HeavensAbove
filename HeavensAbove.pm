@@ -324,7 +324,7 @@ WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
  # and you can naturally use callbacks for those!
  my ($c, n);
  $atlas->fetch( 'N*', 'US', sub { $c++; $n += @_ }  );
- print "$c web requests for fetching $n cities";
+ print "$c web requests needed for fetching $n cities";
 
  # or use your own UserAgent
  my $ua = LWP::UserAgent->new;
@@ -643,7 +643,7 @@ me for all that geographical data in the first place.
 lightning talks at YAPC::Europe 2002 (Munich). Slides will be online
 someday.
 
-WWW::Gazetteer, the original, by Leon Brocard.
+WWW::Gazetteer and WWW::Gazetteer::Calle, by Leon Brocard.
 
 The use Perl discussion that had me write this module from the original
 script: http://use.perl.org/~acme/journal/8079
