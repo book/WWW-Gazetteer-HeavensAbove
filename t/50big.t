@@ -8,7 +8,7 @@ my $g = WWW::Gazetteer::HeavensAbove->new;
 diag("Be patient... this test suite is very long (61 web requests)");
 
 # star at the beginning (9 web requests)
-@cities = $g->fetch( UY => '*s' );
+@cities = $g->fetch( '*s', 'UY' );
 ok( @cities == 231, "231 cities named '*s' in Uruguay" )
   or diag( "Fetched " . @cities . " cities" );
 
@@ -22,15 +22,15 @@ my $cb = sub {
     push @cities, @_;
 };
 @cities = ();
-$g->fetch( CO => 'A*A', $cb );
+$g->fetch( 'A*A', 'CO', $cb );
 ok( @cities == 424, "424 cities named 'A*A' in Colombia" )
   or diag( "Fetched " . @cities . " cities" );
 
 # star at the end (24 web requests)
-@cities = $g->fetch( MX => 'Agua *' );
+@cities = $g->fetch( 'Agua *', 'MX' );
 ok( @cities == 444, "444 cities named 'Agua *' in Mexico" )
   or diag( "Fetched " . @cities . " cities" );
 
 # test for the biggest possible request on a country (12 web requests)
 @counts = ( 189, 57, 0, 11, 2, 78, 6, 23, 0, 0, 0, 0 );
-$g->fetch( PF => '*', $cb );
+$g->fetch( '*', 'PF', $cb );

@@ -6,7 +6,7 @@ my $g = WWW::Gazetteer::HeavensAbove->new;
 my @cities;
 
 # simple query
-@cities = $g->fetch( 'GB', 'London' );
+@cities = $g->fetch( 'London', 'GB' );
 
 ok( @cities == 1, 'Number of cities named London in GB' );
 is_deeply(
@@ -24,11 +24,11 @@ is_deeply(
 );
 
 # non-existant code
-eval { $g->fetch( 'ZZ', 'foo' ); };
+eval { $g->fetch( 'foo', 'ZZ' ); };
 like( $@, qr/No HA code for ZZ ISO code/, 'Invalid code' );
 
 # more cities
-@cities = $g->fetch( 'FR', 'Paris' );
+@cities = $g->fetch( 'Paris', 'FR' );
 
 ok( @cities == 2, 'Number of cities named Paris' );
 
@@ -61,7 +61,7 @@ is_deeply(
 );
 
 # the US are special
-@cities = $g->fetch( 'US', 'New york' );
+@cities = $g->fetch( 'New york', 'US' );
 ok( @cities == 7, 'New York, US' );
 
 is_deeply(

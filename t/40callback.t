@@ -14,7 +14,7 @@ my $callback = sub {
 };
 
 # move both Paris!
-@cities = $g->fetch( 'FR', 'Paris', $callback );
+@cities = $g->fetch( 'Paris', 'FR', $callback );
 
 ok( @cities == 0, 'Data processed: nothing remains' );
 my @tests = (
