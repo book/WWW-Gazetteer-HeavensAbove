@@ -5,7 +5,6 @@ Makefile.PL
 MANIFEST
 README
 t/00basic.t
-t/01pod.t
 t/10new.t
 t/20query.t
 t/30fetch.t
@@ -13,3 +12,4 @@ t/40callback.t
 t/50big.t
 t/pod-coverage.t
 t/pod.t
+META.yml                                 Module meta-data (added by MakeMaker)
