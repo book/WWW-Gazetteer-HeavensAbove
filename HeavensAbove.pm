@@ -7,7 +7,7 @@ use HTML::TreeBuilder;
 use Carp qw( croak );
 
 use vars qw( $VERSION );
-$VERSION = 0.01;
+$VERSION = 0.02;
 
 # web site data
 my $base = 'http://www.heavens-above.com/';
@@ -330,6 +330,9 @@ A city tructure looks like this:
      'name'       => 'Paris',
  };
  
+Note: the 'regioname' attribute is the local name of a region (this can
+change from country to country).
+
 =head2 Methods
 
 =over 4
