@@ -23,7 +23,7 @@ my @tests = (
         'regionname' => 'Region',
         'region'     => 'Rhône-Alpes',
         'alias'      => 'Les Paris',
-        'elevation'  => '508 m',
+        'elevation'  => '508',
         'longitude'  => '5.733',
         'name'       => 'Paris'
     },
@@ -32,7 +32,7 @@ my @tests = (
         'regionname' => 'Region',
         'region'     => 'Île-de-France',
         'alias'      => '',
-        'elevation'  => '34 m',
+        'elevation'  => '34',
         'longitude'  => '2.333',
         'name'       => 'Paris'
     }

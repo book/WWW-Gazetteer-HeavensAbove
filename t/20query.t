@@ -14,7 +14,7 @@ my $london = {
     'regionname' => 'County',
     'region'     => 'Greater London',
     'alias'      => '',
-    'elevation'  => '18 m',
+    'elevation'  => '18',
     'longitude'  => '-0.105',
     'name'       => 'London'
 };
@@ -34,7 +34,7 @@ my @tests = (
         'regionname' => 'Region',
         'region'     => 'Balkh',
         'alias'      => '',
-        'elevation'  => '363 m',
+        'elevation'  => '363',
         'longitude'  => '67.100',
         'name'       => 'Mazar-e Sharif'
     },
@@ -43,7 +43,7 @@ my @tests = (
         'regionname' => 'Region',
         'region'     => 'Balkh',
         'alias'      => 'Mazar-e Sharif',
-        'elevation'  => '363 m',
+        'elevation'  => '363',
         'longitude'  => '67.100',
         'name'       => 'Mazar-i-Sharif'
     },
@@ -52,7 +52,7 @@ my @tests = (
         'regionname' => 'Region',
         'region'     => 'Balkh',
         'alias'      => 'Mazar-e Sharif',
-        'elevation'  => '363 m',
+        'elevation'  => '363',
         'longitude'  => '67.100',
         'name'       => 'Mazare Srif'
     }
