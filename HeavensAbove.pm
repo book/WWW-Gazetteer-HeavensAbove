@@ -385,7 +385,7 @@ Return a new WWW::Gazetteer::UserAgent, ready to fetch() cities for you.
 The constructor can be given a list of parameters.
 Currently supported parameters are :
 
-C<ua   > - the LWP::UserAgent used for the web requests
+C<ua> - the LWP::UserAgent used for the web requests
 
 C<retry> - the number of times a failed connection will be retried
 
@@ -413,6 +413,11 @@ This method always returns an array of city structures. If the request
 returns a lot of cities, you can pass a callback routine to fetch().
 This routine receives the list of city structures as @_. If a callback
 method is given to fetch(), fetch() will return an empty list.
+
+A single call to fetch() can lead to several web requests. If the
+query returns more than 200 answeris, heavens-above.com cuts at 200.
+WWW::Gazetteer::HeavensAbove picks as many data as possible from this
+first answer and then refines the query again and again.
 
 Here's an excerpt from heavens-above.com documentation: 
 
@@ -603,12 +608,12 @@ Find an appropriate interface with Leon, and adhere to it.
 
 =head1 BUGS
 
-Network errors croak. This can be a problem when making big queries
-(that return more than 200 answers) which results are passed to a
-callback, because part of the data has been already processed by
-the callback when the script dies. And even if you can catch the exception,
-you cannot easily guess where to start again. Maybe a retry parameter
-could help a little.
+Network errors croak after the maximum retry count has been reached. This
+can be a problem when making big queries (that return more than 200
+answers) which results are passed to a callback, because part of the data
+has been already processed by the callback when the script dies. And
+even if you can catch the exception, you cannot easily guess where to
+start again.
 
 Bugs in the database are not from heavens-above.com, since they
 "put together and enhanced" data from the following two sources:
