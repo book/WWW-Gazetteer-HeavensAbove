@@ -7,9 +7,9 @@ my $g = WWW::Gazetteer::HeavensAbove->new;
 
 diag("Be patient... this test suite is very long (49 web requests)");
 
-# star at the end (24 web requests)
-@cities = $g->fetch( MX => 'Agua *' );
-ok( @cities == 444, "444 cities named 'Agua *' in Mexico" )
+# star at the beginning (9 web requests)
+@cities = $g->fetch( UY => '*s' );
+ok( @cities == 231, "231 cities named '*s' in Uruguay" )
   or diag( "Fetched " . @cities . " cities" );
 
 # star in the middle (16 web requests)
@@ -26,7 +26,7 @@ $g->fetch( CO => 'A*A', $cb );
 ok( @cities == 424, "424 cities named 'A*A' in Colombia" )
   or diag( "Fetched " . @cities . " cities" );
 
-# star at the beginning (9 web requests)
-@cities = $g->fetch( UY => '*s' );
-ok( @cities == 231, "231 cities named '*s' in Uruguay" )
+# star at the end (24 web requests)
+@cities = $g->fetch( MX => 'Agua *' );
+ok( @cities == 444, "444 cities named 'Agua *' in Mexico" )
   or diag( "Fetched " . @cities . " cities" );
