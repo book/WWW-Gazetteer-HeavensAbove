@@ -5,6 +5,7 @@ Makefile.PL
 README
 eg/city.pl
 t/00basic.t
+t/01pod.t
 t/10new.t
 t/20query.t
 t/30fetch.t
