@@ -7,7 +7,7 @@ use HTML::TreeBuilder;
 use Carp qw( croak );
 
 use vars qw( $VERSION );
-$VERSION = 0.03;
+$VERSION = 0.04;
 
 # web site data
 my $base = 'http://www.heavens-above.com/';
@@ -338,7 +338,7 @@ Due to the way heavens-above.com's database was created, cities from the
 U.S.A. are handled as a special case. The C<region> field is the state,
 and a special field named C<county> holds the county name.
 
-An example of an American city:
+Here is an example of an American city:
 
  $newyork = {
      latitude   => '39.685',
@@ -399,6 +399,7 @@ sub fetch {
 =item query( $code, $searchstring [, $callback ] );
 
 This method is the actual method called by fetch().
+
 The only difference is that $code is the heavens-above.com specific
 country code, instead of the ISO 3166 code.
 
@@ -513,9 +514,12 @@ Find an appropriate interface with Leon, and adhere to it.
 
 =head1 BUGS
 
-WWW::Gazetteer::HeavensAbove does not work correctly yes with the US,
-since the database returns State and County. I suppose this is the only
-country that behaves this way, due to the way the database was created.
+Network errors croak. This can be a problem when making big queries
+(that return more than 200 answers) which results are passed to a
+callback, because part of the data has been already processed by
+the callback when the script dies. An even if you can catch the exception,
+you cannot easily guess where to start again. Maybe a retry parameter
+could help a little.
 
 Bugs in the database are not from heavens-above.com, since they
 "put together and enhanced" data from the following two sources:
