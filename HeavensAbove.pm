@@ -7,7 +7,7 @@ use HTML::TreeBuilder;
 use Carp qw( croak );
 
 use vars qw( $VERSION );
-$VERSION = '0.15';
+$VERSION = '0.16';
 
 # web site data
 my $base = 'http://www.heavens-above.com/';
@@ -347,12 +347,12 @@ WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
 =head1 DESCRIPTION
 
 A gazetteer is a geographical dictionary (as at the back of an atlas).
-The WWW::Gazetteer::HeavensAbove module uses the information at
-http://www.heavens-above.com/countries.asp to return geographical location
+The C<WWW::Gazetteer::HeavensAbove> module uses the information at
+L<http://www.heavens-above.com/countries.asp> to return geographical location
 (longitude, latitude, elevation) for towns and cities in countries in the
 world.
 
-Once a WWW::Gazetteer::HeavensAbove objects is created, use the find()
+Once a C<WWW::Gazetteer::HeavensAbove> objects is created, use the C<find()>
 method to return lists of hashrefs holding all the information for the
 matching cities.
 
@@ -396,17 +396,17 @@ Here is an example of an American city:
 
 =item new()
 
-Return a new WWW::Gazetteer::UserAgent, ready to find() cities for you.
+Return a new C<WWW::Gazetteer::UserAgent>, ready to C<find()> cities for you.
 
 The constructor can be given a list of parameters.
-Currently supported parameters are :
+Currently supported parameters are:
 
-C<ua> - the LWP::UserAgent used for the web requests
+C<ua> - the C<LWP::UserAgent> used for the web requests
 
 C<retry> - the number of times a failed connection will be retried
 
-You can also use the generic WWW::Gazetteer module to create a new
-WWW::Gazetteer::HeavenAbove object:
+You can also use the generic C<WWW::Gazetteer> module to create a new
+C<WWW::Gazetteer::HeavenAbove> object:
 
  use WWW::Gazetteer;
  my $g = WWW::Gazetteer->new('HeavensAbove');
@@ -433,17 +433,17 @@ sub new {
 
 =item find( $city, $country [, $callback ] )
 
-Return a list of cities matching $city, within the country with ISO 3166
+Return a list of cities matching C<$city>, within the country with ISO 3166
 code $code (not all codes are supported by heavens-above.com).
 
 This method always returns an array of city structures. If the request
-returns a lot of cities, you can pass a callback routine to find().
+returns a lot of cities, you can pass a callback routine to C<find()>.
 This routine receives the list of city structures as @_. If a callback
-method is given to find(), find() will return an empty list.
+method is given to C<find()>, C<find()> will return an empty list.
 
-A single call to find() can lead to several web requests. If the
+A single call to C<find()> can lead to several web requests. If the
 query returns more than 200 answeris, heavens-above.com cuts at 200.
-WWW::Gazetteer::HeavensAbove picks as many data as possible from this
+C<WWW::Gazetteer::HeavensAbove> picks as many data as possible from this
 first answer and then refines the query again and again.
 
 Here's an excerpt from heavens-above.com documentation: 
@@ -466,7 +466,7 @@ will be matched.
 =back
 
 Note: heavens-above.com doesn't use ISO 3166 codes, but its own
-country codes. If you want to use those directly, please see the query()
+country codes. If you want to use those directly, please see the C<query()>
 method. (And read the source for the full list of HA codes.)
 
 =cut
@@ -648,12 +648,12 @@ sub _getpage {
 
 =head2 Callbacks
 
-The find() and query() methods both accept a optionnal coderef as
+The C<find()> and C<query()> methods both accept a optionnal coderef as
 their third argument. This method is used as a callback each time a
 batch of cities is returned by a web query to heavens-above.com.
 
 This can be very useful if a query with a joker returns more than
-200 answers.  WWW::Gazetteer::HeavensAbove breaks it into new requests
+200 answers.  C<WWW::Gazetteer::HeavensAbove> breaks it into new requests
 that return a smaller number of answers. The callback is called with
 the results of the subquery after each web request.
 
@@ -670,13 +670,13 @@ An example callback is (from F<eg/city.pl>):
  };
 
 Please note that, due to the nature of the queries, your callback
-can (and will most probably) be called with an empty @_.
+can (and will most probably) be called with an empty C<@_>.
 
 =head1 ALGORITHM
 
 The web site returns only the first 200 answers to any query.
 To handle huge requests like '*' (the biggest possible),
-WWW::Gazetteer::HeavensAbove splits the requests in several parts.
+C<WWW::Gazetteer::HeavensAbove> splits the requests in several parts.
 
 Example, looking for C<pa*> in France:
 
@@ -725,21 +725,21 @@ start again.
 
 Bugs in the database are not from heavens-above.com, since they
 "put together and enhanced" data from the following two sources:
-US Geological Survey (http://geonames.usgs.gov/index.html) for the
+US Geological Survey (L<http://geonames.usgs.gov/index.html>) for the
 USA and dependencies, and The National Imaging and Mapping Agency
-(http://www.nima.mil/gns/html/index.html) for all other countries.
+(L<http://www.nima.mil/gns/html/index.html>) for all other countries.
 
-See also: http://www.heavens-above.com/ShowFAQ.asp?FAQID=100
+See also: L<http://www.heavens-above.com/ShowFAQ.asp?FAQID=100>
 
 =head1 AUTHOR
 
-Philippe "BooK" Bruhat E<lt>book@cpan.orgE<gt>.
+Philippe "BooK" Bruhat C<< <book@cpan.org> >>.
 
 This module was a script, before I found out about Leon Brocard's
-WWW::Gazetteer module. Thanks! And, erm, bits of the documentation were
-stolen from WWW::Gazetteer.
+L<WWW::Gazetteer module>. Thanks! And, erm, bits of the documentation were
+stolen from L<WWW::Gazetteer>.
 
-Thanks to Alain Zalmanski (of http://www.fatrazie.com/ fame) for asking
+Thanks to Alain Zalmanski (of L<http://www.fatrazie.com/> fame) for asking
 me for all that geographical data in the first place.
 
 =head1 SEE ALSO
@@ -747,10 +747,10 @@ me for all that geographical data in the first place.
 "How I captured thousands of Afghan cities in a few hours", one of my
 lightning talks at YAPC::Europe 2002 (Munich). You had to be there.
 
-WWW::Gazetteer and WWW::Gazetteer::Calle, by Leon Brocard.
+L<WWW::Gazetteer> and L<WWW::Gazetteer::Calle>, by Leon Brocard.
 
 The use Perl discussion that had me write this module from the original
-script: http://use.perl.org/~acme/journal/8079
+script: L<http://use.perl.org/~acme/journal/8079>
 
 =head1 COPYRIGHT
 
