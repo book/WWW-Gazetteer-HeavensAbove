@@ -16,3 +16,4 @@ CVS/.*
 ^TODO$
 ^dist/
 ^cover_db/
+.lwpcookies
