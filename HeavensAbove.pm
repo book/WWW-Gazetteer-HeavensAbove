@@ -33,7 +33,7 @@ my %iso = (
     'AZ' => 'AJ',    # AZERBAIJAN
     'BB' => 'BB',    # BARBADOS
     'BD' => 'BG',    # BANGLADESH
-        'BE' => 'BE',    # BELGIUM
+    'BE' => 'BE',    # BELGIUM
     'BF' => 'UV',    # BURKINA FASO
     'BG' => 'BU',    # BULGARIA
     'BH' => 'BA',    # BAHRAIN
@@ -747,7 +747,9 @@ L<WWW::Gazetteer> and L<WWW::Gazetteer::Calle>, by Leon Brocard.
 The use Perl discussion that had me write this module from the original
 script: L<http://use.perl.org/~acme/journal/8079>
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2002-2006 Philippe Bruhat.
 
 This module is free software; you can redistribute it or modify it under
 the same terms as Perl itself.
