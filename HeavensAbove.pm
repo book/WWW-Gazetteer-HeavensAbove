@@ -7,7 +7,7 @@ use HTML::TreeBuilder;
 use Carp qw( croak );
 
 use vars qw( $VERSION );
-$VERSION = '0.16';
+$VERSION = '0.17';
 
 # web site data
 my $base = 'http://www.heavens-above.com/';
@@ -461,6 +461,7 @@ sub _getpage {
             # next step
             _isolatin($string);
             $string =~ s/([a-y])\*/chr(1+ord$1).'*'/ie;    # classic
+            $string =~ s/ß\*/t*/;           # German ß sorts before t
             $string =~ s/[-'" (,]\*/a*/;    # quick and dirty for now
         }
 
