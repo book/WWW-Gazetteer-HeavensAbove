@@ -1,0 +1,10 @@
+blib
+_build
+Build
+*.bak
+Makefile
+cover_db
+pm_to_blib
+mess
+WWW-Gazetteer-HeavensAbove-*
+*.swp
