@@ -678,7 +678,9 @@ Example, looking for C<pa*> in France:
 
 =over 4
 
-=item C<pa*> returns more than 200 answers, the last ones being:
+=item *
+
+C<pa*> returns more than 200 answers, the last ones being:
 
     195 Paques, Rhône-Alpes
     196 Paquier, Rhône-Alpes
@@ -691,7 +693,11 @@ The algorithm keeps the 196 first ones, because they match <pa*> and
 not C<par*> (C<r> is the first character matched by C<*> in the
 last city matched).
 
-=item The next sub-query is computed as C<par*> (176 cities)
+=item *
+
+The next sub-query is computed as C<par*> (176 cities)
+
+=item *
 
 It is followed by C<pas*> (64), C<pat*> (12), C<pau*> (44), C<pav*>
 (11), C<paw*> (0), C<pay*> (18) and C<paz*> (5).
