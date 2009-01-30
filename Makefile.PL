@@ -9,7 +9,7 @@ WriteMakefile(
         'Test::More'        => 0,
     },
     ABSTRACT_FROM => 'lib/WWW/Gazetteer/HeavensAbove.pm',
-    AUTHOR        => 'Philippe "BooK" Bruhat <book@cpan.org>',
+    AUTHOR        => 'Philippe Bruhat (BooK) <book@cpan.org>',
     LICENSE       => 'perl',
     PL_FILES      => {},
 );

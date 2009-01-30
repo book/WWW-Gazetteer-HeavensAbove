@@ -757,11 +757,11 @@ L<http://git.bruhat.net/r/WWW-Gazetteer-HeavensAbove.git>
 
 =head1 AUTHOR
 
-Philippe "BooK" Bruhat C<< <book@cpan.org> >>.
+Philippe Bruhat (BooK) C<< <book@cpan.org> >>.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2009 Philippe Bruhat.
+Copyright 2002-2009 Philippe Bruhat (BooK).
 
 =head1 LICENSE
 
