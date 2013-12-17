@@ -327,7 +327,7 @@ sub find {
 sub query {
     my ( $self, $query, $code, $callback ) = @_;
     $code = uc $code;
-    my $iso;
+    my $iso = '';
     for ( keys %iso ) { $iso = $_, last if $iso{$_} eq $code }
 
     my $url = $base . "SelectTown.aspx";
