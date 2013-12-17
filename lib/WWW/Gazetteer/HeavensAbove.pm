@@ -18,7 +18,6 @@ my %iso = (
     # Computer generated
     'AD' => 'AN',    # ANDORRA
     'AE' => 'AE',    # UNITED ARAB EMIRATES
-    'AF' => 'AF',    # AFGHANISTAN
     'AG' => 'AC',    # ANTIGUA AND BARBUDA
     'AI' => 'AV',    # ANGUILLA
     'AL' => 'AL',    # ALBANIA
@@ -216,7 +215,11 @@ my %iso = (
     'MD' => 'MD',    # MOLDOVA, REPUBLIC OF / MOLDOVA
     'WF' => 'WF',    # WALLIS AND FUTUNA ISLANDS / WALLIS AND FUTUNA
     'LA' => 'LA',    # LAO PEOPLE'S DEMOCRATIC REPUBLIC / LAOS
-    'AN' => 'NT',    # NETHERLANDS ANTILLES / NETHERLAND ANTILLES
+
+    # added to HA since version 0.18
+    'TJ'  => 'TI',   # TAJIKISTAN
+    'TZ'  => 'TZ',   # TANZANIA, UNITED REPUBLIC OF
+    'VI'  => 'UI',   # VIRGIN ISLANDS (U.S.)
 );
 
 =begin codes
@@ -247,10 +250,8 @@ my %iso = (
          'ST' => 'SAO TOME AND PRINCIPE',
          'TF' => 'FRENCH SOUTHERN TERRITORIES',
          'EH' => 'WESTERN SAHARA',
-         'TJ' => 'TAJIKISTAN',
          'TK' => 'TOKELAU',
          'TP' => 'EAST TIMOR',
-         'TZ' => 'TANZANIA, UNITED REPUBLIC OF',
          'MO' => 'MACAU',
          'MP' => 'NORTHERN MARIANA ISLANDS',
          'MQ' => 'MARTINIQUE',
@@ -264,7 +265,6 @@ my %iso = (
          'NR' => 'NAURU',
          'NU' => 'NIUE',
          'VG' => 'VIRGIN ISLANDS (BRITISH)',
-         'VI' => 'VIRGIN ISLANDS (U.S.)',
          'GL' => 'GREENLAND',
          'GP' => 'GUADELOUPE',
          'GS' => 'SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS',
@@ -274,6 +274,10 @@ my %iso = (
          'PM' => 'ST. PIERRE AND MIQUELON',
          'PN' => 'PITCAIRN',
          'PW' => 'PALAU'
+
+         # removed from HA since version 0.18
+         'AN' => 'NETHERLANDS ANTILLES / NETHERLAND ANTILLES', # NT
+         'AF' => 'AFGHANISTAN', # AF
        );
 
 =end codes
