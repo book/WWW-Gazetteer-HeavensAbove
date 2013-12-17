@@ -1,5 +1,5 @@
 use strict;
-use Test::More tests => 11;
+use Test::More tests => 12;
 use WWW::Gazetteer::HeavensAbove;
 
 my $g = WWW::Gazetteer::HeavensAbove->new( retry => 1 );
@@ -59,6 +59,10 @@ my @tests = (
 );
 
 is_deeply( $cities[$_], $tests[$_], $tests[$_]{name} ) for 0 .. 2;
+
+# a HA country code that doesn't exist
+eval { @cities = $g->find( 'Brest', 'ZZ' ); };
+like( $@, qr/No HA code for ZZ ISO code/, 'Invalid code' );
 
 # a HA country code that doesn't exist
 eval { @cities = $g->query( 'Brest', 'RU' ); };
