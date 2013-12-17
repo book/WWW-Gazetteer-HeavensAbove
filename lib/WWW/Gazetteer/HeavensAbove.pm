@@ -330,7 +330,7 @@ sub query {
     my $iso;
     for ( keys %iso ) { $iso = $_, last if $iso{$_} eq $code }
 
-    my $url = $base . "selecttown.asp?CountryID=$code&loc=Unspecified";
+    my $url = $base . "SelectTown.aspx";
     my $res = $self->{ua}->request( HTTP::Request->new( GET => $url ) );
     croak $res->status_line if not $res->is_success;
 
@@ -342,7 +342,7 @@ sub query {
     do {
 
         # $string now holds the next request (if necessary)
-        ( $string, my @list ) = $self->_getpage( $form, $string, $iso );
+        ( $string, my @list ) = $self->_getpage( $form, $string, $code, $iso );
 
         # process the block of data
         defined $callback ? $callback->(@list) : push @data, @list;
@@ -354,10 +354,12 @@ sub query {
 
 # this is a private method
 sub _getpage {
-    my ( $self, $form, $string, $iso ) = @_;
+    my ( $self, $form, $string, $code, $iso ) = @_;
 
     # fill the form and click submit
-    $form->find_input('Search')->value($string);
+    $form->find_input('ctl00$cph1$ddlCountry')->value($code);
+    $form->find_input('ctl00$cph1$txtSearch')->value($string);
+
     my $res;
     my $retry = $self->{retry};
 
