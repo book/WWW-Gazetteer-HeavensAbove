@@ -758,7 +758,8 @@ The use Perl discussion that had me write this module from the original
 script: L<http://use.perl.org/~acme/journal/8079>
 
 The module master repository is held at:
-L<http://git.bruhat.net/r/WWW-Gazetteer-HeavensAbove.git>
+L<http://git.bruhat.net/r/WWW-Gazetteer-HeavensAbove.git> and
+L<http://github.com/book/WWW-Gazetteer-HeavensAbove>.
 
 =head1 AUTHOR
 
