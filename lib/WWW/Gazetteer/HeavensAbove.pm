@@ -482,9 +482,7 @@ sub _getpage {
 
 __END__
 
-=head1 NAME
-
-WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
+# ABSTRACT: Find location of world towns and cities
 
 =head1 SYNOPSIS
 
@@ -761,13 +759,9 @@ The module master repository is held at:
 L<http://git.bruhat.net/r/WWW-Gazetteer-HeavensAbove.git> and
 L<http://github.com/book/WWW-Gazetteer-HeavensAbove>.
 
-=head1 AUTHOR
-
-Philippe Bruhat (BooK) C<< <book@cpan.org> >>.
-
 =head1 COPYRIGHT
 
-Copyright 2002-2009 Philippe Bruhat (BooK).
+Copyright 2002-2013 Philippe Bruhat (BooK).
 
 =head1 LICENSE
 
@@ -775,4 +769,3 @@ This module is free software; you can redistribute it or modify it under
 the same terms as Perl itself.
 
 =cut
-
