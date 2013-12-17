@@ -1,5 +1,6 @@
 use strict;
 use Test::More tests => 36;
+use warnings;
 use WWW::Gazetteer::HeavensAbove;
 
 my @cities;

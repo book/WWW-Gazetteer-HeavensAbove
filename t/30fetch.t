@@ -1,5 +1,6 @@
 use strict;
 use Test::More tests => 9;
+use warnings;
 use WWW::Gazetteer::HeavensAbove;
 
 my $g = WWW::Gazetteer::HeavensAbove->new;

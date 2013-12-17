@@ -1,6 +1,7 @@
 package WWW::Gazetteer::HeavensAbove;
 
 use strict;
+use warnings;
 use LWP::UserAgent;
 use HTML::Form;
 use HTML::TreeBuilder;
