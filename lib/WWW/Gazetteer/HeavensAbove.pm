@@ -382,32 +382,32 @@ sub _getpage {
 
     # check if there were more than 200 answers
     $content =~ s/&nbsp;/ /g;
-    $content =~ /(\d+) towns were found by the search./;
-    my $count = $1;
-    $count = -1 if index( $content, 'cut-off after 200 towns' ) != -1;
 
     # parse the data
     my @data;
     {
         my $root = HTML::TreeBuilder->new_from_content($content);
         my @rows =
-          ( $root->look_down( _tag => 'table' ) )[2]->look_down( _tag => 'tr' );
+          ( $root->look_down( _tag => 'table' ) )[4]->look_down( _tag => 'tr' );
 
         # handle the region name
         my $header = shift @rows;
         my @headers = map { lc $_->as_trimmed_text } $header->content_list;
         my $regionname;
         ( $regionname, $headers[1] ) = ( $headers[1], 'region' )
-          if ( @headers >= 5 );
+          if ( @headers >= 6 );
 
         # fetch and process the data for each line
         for (@rows) {
             my $town =
-              { regionname => $regionname || '', alias => '', region => '' };
+              { regionname => $regionname || '', region => '' };
             @$town{@headers} = map { $_->as_trimmed_text } $_->content_list;
-            $town->{alias} = $1 if $town->{name} =~ s/\(alias for (.*?)\)//;
+            $town->{latitude} =~ s/(.*)\x{b0}([NS])/($2 eq'S'&&'-').$1/e;
+            $town->{longitude} =~ s/(.*)\x{b0}([WE])/($2 eq'W'&&'-').$1/e;
+            $town->{name} = delete $town->{place};
             $town->{elevation} =~ s/ m$//;
             $town->{iso} = $iso;
+            delete $town->{''};
             push @data, $town;
         }
 
@@ -418,7 +418,7 @@ sub _getpage {
 
     # print STDERR "$string -> "; # DEBUG
     # more than 200 answers: compute better hints for next query
-    if ( $count == -1 ) {
+    if ( @data == 200 ) {
 
         # simplest case (scary, heh?)
         if ( $string =~ y/*// == 1 ) {
