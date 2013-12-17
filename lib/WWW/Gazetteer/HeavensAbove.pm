@@ -545,12 +545,11 @@ A city tructure looks like this:
      latitude   => '45.633',
      regionname => 'Region',
      region     => 'Rhône-Alpes',
-     alias      => 'Les Paris',
      elevation  => '508',            # meters
      longitude  => '5.733',
      name       => 'Paris',
  };
- 
+
 Note: the 'regioname' attribute is the local name of a region (this can
 change from country to country).
 
@@ -566,7 +565,6 @@ Here is an example of an American city:
      regionname => 'State',
      region     => 'Missouri',
      county     => 'Caldwell',    # this is only for US cities
-     alias      => '',
      elevation  => '244',
      longitude  => '-93.927',
      name       => 'New York'
@@ -669,7 +667,7 @@ An example callback is (from F<eg/city.pl>):
  my $cb = sub {
      local $, = "\t";
      local $\ = $/;
-     print @$_{qw(name alias region latitude longitude elevation)} for @_;
+     print @$_{qw(name region latitude longitude elevation)} for @_;
  };
 
 Please note that, due to the nature of the queries, your callback

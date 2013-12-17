@@ -15,7 +15,7 @@ my $atlas = WWW::Gazetteer::HeavensAbove->new;
 my %seen;
 my $cb = sub {
     for my $city (@_) {
-        my $line = join( ':', @$city{qw(name latitude longitude alias)} );
+        my $line = join( ':', @$city{qw(name latitude longitude)} );
         $seen{$line}++;
 
         # in case of duplicate, fail and exit
