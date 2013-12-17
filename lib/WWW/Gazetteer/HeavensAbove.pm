@@ -599,7 +599,7 @@ You can also pass it inialisation parameters:
 =item find( $city, $country [, $callback ] )
 
 Return a list of cities matching C<$city>, within the country with ISO 3166
-code $code (not all codes are supported by heavens-above.com).
+code C<$code> (not all codes are supported by heavens-above.com).
 
 This method always returns an array of city structures. If the request
 returns a lot of cities, you can pass a callback routine to C<find()>.
