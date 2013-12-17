@@ -18,6 +18,7 @@ my %iso = (
     # Computer generated
     'AD' => 'AN',    # ANDORRA
     'AE' => 'AE',    # UNITED ARAB EMIRATES
+    'AF' => 'AF',    # AFGHANISTAN
     'AG' => 'AC',    # ANTIGUA AND BARBUDA
     'AI' => 'AV',    # ANGUILLA
     'AL' => 'AL',    # ALBANIA
@@ -277,7 +278,6 @@ my %iso = (
 
          # removed from HA since version 0.18
          'AN' => 'NETHERLANDS ANTILLES / NETHERLAND ANTILLES', # NT
-         'AF' => 'AFGHANISTAN', # AF
        );
 
 =end codes
