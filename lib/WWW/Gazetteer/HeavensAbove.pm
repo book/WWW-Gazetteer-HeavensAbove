@@ -735,7 +735,7 @@ US Geological Survey (L<http://geonames.usgs.gov/index.html>) for the
 USA and dependencies, and The National Imaging and Mapping Agency
 (L<http://www.nima.mil/gns/html/index.html>) for all other countries.
 
-See also: L<http://www.heavens-above.com/ShowFAQ.asp?FAQID=100>
+See also: L<http://www.heavens-above.com/ShowFAQ.aspx?FAQID=100>
 
 =head1 ACKNOWLEDGEMENTS
 
