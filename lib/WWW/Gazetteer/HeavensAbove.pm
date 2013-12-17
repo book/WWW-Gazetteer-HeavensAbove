@@ -371,7 +371,8 @@ sub _getpage {
     }
 
     # bad HA code
-    my $content = $res->content;
+    my $content = $res->decoded_content;
+
     if ( $res->code == 500 and index( $content, "ADODB.Field" ) != -1 ) {
         $res->request->content =~ /CountryID=(..)/;
         croak "No HA code $1";
