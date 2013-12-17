@@ -526,12 +526,12 @@ WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
 =head1 DESCRIPTION
 
 A gazetteer is a geographical dictionary (as at the back of an atlas).
-The C<WWW::Gazetteer::HeavensAbove> module uses the information at
+The WWW::Gazetteer::HeavensAbove module uses the information at
 L<http://www.heavens-above.com/countries.asp> to return geographical location
 (longitude, latitude, elevation) for towns and cities in countries in the
 world.
 
-Once a C<WWW::Gazetteer::HeavensAbove> objects is created, use the C<find()>
+Once a WWW::Gazetteer::HeavensAbove objects is created, use the C<find()>
 method to return lists of hashrefs holding all the information for the
 matching cities.
 
@@ -575,17 +575,17 @@ Here is an example of an American city:
 
 =item new()
 
-Return a new C<WWW::Gazetteer::UserAgent>, ready to C<find()> cities for you.
+Return a new WWW::Gazetteer::HeavensAbove user-agent, ready to C<find()> cities for you.
 
 The constructor can be given a list of parameters.
 Currently supported parameters are:
 
-C<ua> - the C<LWP::UserAgent> used for the web requests
+C<ua> - the L<LWP::UserAgent> used for the web requests
 
 C<retry> - the number of times a failed connection will be retried
 
-You can also use the generic C<WWW::Gazetteer> module to create a new
-C<WWW::Gazetteer::HeavenAbove> object:
+You can also use the generic L<WWW::Gazetteer> module to create a new
+WWW::Gazetteer::HeavenAbove object:
 
  use WWW::Gazetteer;
  my $g = WWW::Gazetteer->new('HeavensAbove');
@@ -602,15 +602,15 @@ code $code (not all codes are supported by heavens-above.com).
 
 This method always returns an array of city structures. If the request
 returns a lot of cities, you can pass a callback routine to C<find()>.
-This routine receives the list of city structures as @_. If a callback
+This routine receives the list of city structures as C<@_>. If a callback
 method is given to C<find()>, C<find()> will return an empty list.
 
 A single call to C<find()> can lead to several web requests. If the
 query returns more than 200 answeris, heavens-above.com cuts at 200.
-C<WWW::Gazetteer::HeavensAbove> picks as many data as possible from this
+WWW::Gazetteer::HeavensAbove picks as many data as possible from this
 first answer and then refines the query again and again.
 
-Here's an excerpt from heavens-above.com documentation: 
+Here's an excerpt from heavens-above.com documentation:
 
 =over 4
 
@@ -635,13 +635,13 @@ method. (And read the source for the full list of HA codes.)
 
 =item fetch( $searchstring, $code [, $callback ] );
 
-fetch() is a synonym for find(). It is kept for backward compatibility.
+C<fetch()> is a synonym for C<find()>. It is kept for backward compatibility.
 
 =item query( $searchstring, $code [, $callback ] );
 
-This method is the actual method called by find().
+This method is the actual method called by C<find()>.
 
-The only difference is that $code is the heavens-above.com specific
+The only difference is that C<$code> is the heavens-above.com specific
 country code, instead of the ISO 3166 code.
 
 =back
@@ -653,7 +653,7 @@ their third argument. This method is used as a callback each time a
 batch of cities is returned by a web query to heavens-above.com.
 
 This can be very useful if a query with a joker returns more than
-200 answers.  C<WWW::Gazetteer::HeavensAbove> breaks it into new requests
+200 answers. WWW::Gazetteer::HeavensAbove breaks it into new requests
 that return a smaller number of answers. The callback is called with
 the results of the subquery after each web request.
 
@@ -676,7 +676,7 @@ can (and will most probably) be called with an empty C<@_>.
 
 The web site returns only the first 200 answers to any query.
 To handle huge requests like '*' (the biggest possible),
-C<WWW::Gazetteer::HeavensAbove> splits the requests in several parts.
+WWW::Gazetteer::HeavensAbove splits the requests in several parts.
 
 Example, looking for C<pa*> in France:
 
@@ -693,7 +693,7 @@ C<pa*> returns more than 200 answers, the last ones being:
     199 Paraise, Bourgogne
     200 Paraize (Paraise), Bourgogne
 
-The algorithm keeps the 196 first ones, because they match <pa*> and 
+The algorithm keeps the 196 first ones, because they match C<pa*> and
 not C<par*> (C<r> is the first character matched by C<*> in the
 last city matched).
 
