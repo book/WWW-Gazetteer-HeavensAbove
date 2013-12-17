@@ -1,7 +1,13 @@
 use strict;
-use Test::More tests => 3;
 use warnings;
+use t::Util;
+use Test::More;
 use WWW::Gazetteer::HeavensAbove;
+
+plan 'skip_all' => 'Internet connection required to run this test'
+   if ! web_ok();
+
+plan tests => 3;
 
 my $g = WWW::Gazetteer::HeavensAbove->new;
 
