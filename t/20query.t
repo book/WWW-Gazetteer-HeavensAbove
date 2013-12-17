@@ -62,7 +62,7 @@ is_deeply( $cities[$_], $tests[$_], $tests[$_]{name} ) for 0 .. 2;
 
 # a HA country code that doesn't exist
 eval { @cities = $g->query( 'Brest', 'RU' ); };
-like( $@, qr/No HA code RU/, 'Invalid code' );
+like( $@, qr/500 Internal Server Error/, 'Invalid code' );
 
 # a country without regions
 @cities = $g->query( 'Fitii', 'FP' );
