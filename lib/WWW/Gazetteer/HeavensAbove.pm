@@ -8,7 +8,6 @@ use HTML::TreeBuilder;
 use Carp qw( croak );
 
 use vars qw( $VERSION );
-$VERSION = '0.18';
 
 # web site data
 my $base = 'http://www.heavens-above.com/';
