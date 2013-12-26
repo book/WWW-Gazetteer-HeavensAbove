@@ -362,12 +362,14 @@ sub _getpage {
 
     my $res;
     my $retry = $self->{retry};
+    my $delay = 5;
 
-    # retry until it works
+    # retry until it works, with increasing delays
     while ( $retry-- ) {
         $res = $self->{ua}->request( $form->click );
         last if $res->is_success;
-        sleep 3;
+        sleep $delay if $retry;    # don't sleep if you won't retry
+        $delay *= 2;
     }
 
     # there was an error, giving up
