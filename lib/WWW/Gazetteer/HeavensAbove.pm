@@ -370,13 +370,11 @@ sub _getpage {
         sleep 3;
     }
 
-    # bad HA code
-    my $content = $res->decoded_content;
-
-    # Other web errors
+    # there was an error, giving up
     croak $res->status_line if not $res->is_success;
 
     # check if there were more than 200 answers
+    my $content = $res->decoded_content;
     $content =~ s/&nbsp;/ /g;
 
     # parse the data
