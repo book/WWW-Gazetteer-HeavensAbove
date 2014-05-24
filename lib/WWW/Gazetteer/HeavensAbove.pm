@@ -477,7 +477,9 @@ sub _getpage {
 
 __END__
 
-# ABSTRACT: Find location of world towns and cities
+=head1 NAME
+
+WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
 
 =head1 SYNOPSIS
 
@@ -731,6 +733,18 @@ USA and dependencies, and The National Imaging and Mapping Agency
 
 See also: L<http://www.heavens-above.com/ShowFAQ.aspx?FAQID=100>
 
+Please report any bugs or feature requests on the bugtracker website
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=WWW-Gazetteer-HeavensAbove> or by
+email to bug-git-repository@rt.cpan.org.
+
+When submitting a bug or request, please include a test-file or a
+patch to an existing test-file that illustrates the bug or desired
+feature.
+
+=head1 AUTHOR
+
+Philippe Bruhat (BooK) <book@cpan.org>
+
 =head1 ACKNOWLEDGEMENTS
 
 This module was a script, before I found out about Leon Brocard's
@@ -756,7 +770,7 @@ L<http://github.com/book/WWW-Gazetteer-HeavensAbove>.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2013 Philippe Bruhat (BooK).
+Copyright 2002-2014 Philippe Bruhat (BooK).
 
 =head1 LICENSE
 
