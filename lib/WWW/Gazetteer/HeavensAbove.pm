@@ -477,6 +477,8 @@ sub _getpage {
 
 __END__
 
+=encoding iso-8859-1
+
 =head1 NAME
 
 WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
