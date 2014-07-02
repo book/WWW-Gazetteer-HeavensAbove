@@ -525,6 +525,14 @@ WWW::Gazetteer::HeavensAbove - Find location of world towns and cities
 
 =head1 DESCRIPTION
 
+B<This module is obsolete, and is going to be removed from CPAN
+on 2014-07-06.>
+
+B<As of 2014-01-24, L<http://www.heavens-above.com/SelectTown.aspx>
+started returning a C<500 Internal Server Error> code.
+The site has moved from using its own geographic database
+to using Google map services, making this module obsolete.>
+
 A gazetteer is a geographical dictionary (as at the back of an atlas).
 The WWW::Gazetteer::HeavensAbove module uses the information at
 L<http://www.heavens-above.com/countries.asp> to return geographical location
